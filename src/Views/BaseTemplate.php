@@ -1,10 +1,13 @@
 <?php
 namespace App\Views;
-
+use App\Controllers\BaseController;
 class BaseTemplate
 {
     public static function getTemplate()
     {
+        
+        global $user_id, $username, $avatar; // Добавляем переменную для аватара
+
         $template = <<<HTML
         <!DOCTYPE html>
         <html lang="ru">
@@ -19,7 +22,7 @@ class BaseTemplate
             <!-- Custom CSS -->
             <style>
                 body {
-                    font-family: 'Roboto', sans-serif;
+                    font-family: 'Roboto', sans-serif !important;
                     font-size: 16px;
                     line-height: 1.6;
                     background-color: #f8f9fa;
@@ -106,7 +109,6 @@ class BaseTemplate
                     transition: all 0.3s ease-in-out;
                 }
                 .btn-custom:hover {
-                
                 }
                 .btn-outline-primary {
                     background-color: rgb(208,157,176);
@@ -117,6 +119,27 @@ class BaseTemplate
                 .btn-outline-primary:hover {
                     background-color: rgb(215, 93, 138);
                     border-color: rgb(215, 93, 138);
+                }
+                .transition-arrow {
+                    transform: rotate(0deg);
+                }
+                .transition-arrow.open {
+                    transform: rotate(90deg);
+                }
+                @media (max-width: 768px) {
+                    .transition-arrow {
+                        display: none !important;
+                    }
+                }
+                a.dropdown-toggle::after {
+                    display: none !important;
+                }
+                .custom-input-group .input-group-text {
+                    padding: 0.75rem 1rem;
+                    background-color: transparent;
+                    border: none;
+                    border-right: 1px solid rgb(208, 157, 176); /* ← Это она! */
+                    color: rgb(208, 157, 176);
                 }
             </style>
             <script src="../../assets/css/bootstrap.bundle.js"></script>
@@ -156,7 +179,69 @@ class BaseTemplate
                                     </a>
                                 </li>
                             </ul>
-                            <!-- Регистрация в правом углу -->
+HTML;
+
+if ($user_id > 0) {
+   
+ 
+    $template .= <<<HTML
+    <form action="/profile" method="POST" enctype="multipart/form-data" class="animate__animated animate__fadeInUp">
+        <ul class="navbar-nav ms-auto pe-1 me-5">
+            <li class="nav-item dropdown">
+            <a class="nav-link d-flex align-items-center dropdown-toggle p-2 px-3 bg-light shadow-sm"
+   href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+   aria-expanded="false"
+   style="border-radius: 30px; transition: all 0.3s ease; gap: 10px;">
+    <!-- Аватарка пользователя -->
+    <img src="{$avatar}" alt="Аватар пользователя" 
+     class="rounded-circle shadow avatar-preview"
+     style="width: 40px; height: 40px; border: 2px solid #fff; transition: transform 0.3s ease;">
+    <!-- Имя пользователя -->
+    <span class="d-none d-md-inline fw-semibold text-dark fs-6">{$username}</span>
+    <!-- Стрелочка -->
+    <i class="fas fa-chevron-right transition-arrow" id="dropdownArrow"
+       style="transition: transform 0.3s ease;"></i>
+</a>
+                <!-- Выпадающее меню -->
+                <ul class="dropdown-menu animate__animated animate__fadeIn dropdown-menu-start"
+                    style="border-radius: 16px; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.15); margin-top: 12px;">
+                    <!-- Профиль -->
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center py-2 px-3"
+                           href="http://localhost/profile"
+                           style="transition: background-color 0.3s ease; border-radius: 12px;">
+                            <div class="icon-wrapper bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                 style="width: 42px; height: 42px;">
+                                <i class="fas fa-user text-secondary" style="font-size: 1.2rem;"></i>
+                            </div>
+                            <div>
+                                <span class="fw-semibold">Профиль</span><br>
+                                <small class="text-muted">Настройки аккаунта</small>
+                            </div>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <!-- Выход -->
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center py-2 px-3 text-danger"
+                           href="http://localhost/logout"
+                           style="transition: background-color 0.3s ease; border-radius: 12px;">
+                            <div class="icon-wrapper bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                 style="width: 42px; height: 42px;">
+                                <i class="fas fa-sign-out-alt" style="font-size: 1.2rem;"></i>
+                            </div>
+                            <div>
+                                <span class="fw-semibold">Выход</span><br>
+                                <small class="text-muted">Завершить сеанс</small>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+HTML;
+} else {
+            $template .= <<<HTML
                             <ul class="navbar-nav ms-auto">
                                 <li class="nav-item dropdown">
                                     <button class="btn btn-register dropdown-toggle" id="registerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -168,25 +253,25 @@ class BaseTemplate
                                     </ul>
                                 </li>
                             </ul>
+HTML;
+        }
+
+        $template .= <<<HTML
                         </div>
                     </div>
                 </nav>
             </header>
-        HTML;
+HTML;
 
         // Добавим flash сообщение
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (isset($_SESSION['flash'])) {
-            $template .= <<<END
+            $template .= <<<HTML
                 <div id="liveAlertBtn" class="container alert alert-custom alert-dismissible fade show" role="alert">
                     <div>{$_SESSION['flash']}</div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
                     onclick="this.parentNode.style.display='none';"></button>
                 </div>
-            END;
+            HTML;
             unset($_SESSION['flash']);
         }
 
@@ -194,57 +279,65 @@ class BaseTemplate
             <main class="container mt-4">
                 %s
             </main>
-
-                    <footer class="mt-5 bg-dark text-white py-5">
-            <div class="container">
-                <div class="row justify-content-between">
-                    <!-- Секция контактов -->
-                    <div class="col-md-4 mb-4">
-                        <h5 class="text-uppercase fw-bold">Контакты</h5>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-map-marker-alt me-2"></i><span class="text-light">Адрес: г. Кемерово, ул. Центральная, 123</span></li>
-                            <li><i class="fas fa-phone me-2"></i><span class="text-light">Телефон: +7 (999) 123-45-67</span></li>
-                            <li><i class="fas fa-envelope me-2"></i><span class="text-light">Email: info@pizzeria-is221.ru</span></li>
-                        </ul>
-                    </div>
-
-                    <!-- Секция социальных сетей -->
-                    <div class="col-md-4 mb-4 text-center">
-                        <h5 class="text-uppercase fw-bold">Мы в социальных сетях</h5>
-                        <div class="d-flex justify-content-center gap-3 mt-3">
-                            <a href="https://vk.com" target="_blank" class="text-white"><i class="fab fa-vk fa-2x"></i></a>
-                            <a href="https://instagram.com" target="_blank" class="text-white"><i class="fab fa-instagram fa-2x"></i></a>
-                            <a href="https://telegram.org" target="_blank" class="text-white"><i class="fab fa-telegram fa-2x"></i></a>
+            <footer class="mt-5 bg-dark text-white py-5">
+                <div class="container">
+                    <div class="row justify-content-between">
+                        <!-- Секция контактов -->
+                        <div class="col-md-4 mb-4">
+                            <h5 class="text-uppercase fw-bold">Контакты</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-map-marker-alt me-2"></i><span class="text-light">Адрес: г. Кемерово, ул. Тухочевского, 32</span></li>
+                                <li><i class="fas fa-phone me-2"></i><span class="text-light">Телефон: +7 (999) 777-99-71</span></li>
+                                <li><i class="fas fa-envelope me-2"></i><span class="text-light">Email: info@pizzeria-is221.ru</span></li>
+                            </ul>
+                        </div>
+                        <!-- Секция социальных сетей -->
+                        <div class="col-md-4 mb-4 text-center">
+                            <h5 class="text-uppercase fw-bold">Мы в социальных сетях</h5>
+                            <div class="d-flex justify-content-center gap-3 mt-3">
+                                <a href="https://vk.com" target="_blank" class="text-white"><i class="fab fa-vk fa-2x"></i></a>
+                                <a href="https://instagram.com" target="_blank" class="text-white"><i class="fab fa-instagram fa-2x"></i></a>
+                                <a href="https://telegram.org" target="_blank" class="text-white"><i class="fab fa-telegram fa-2x"></i></a>
+                            </div>
+                        </div>
+                        <!-- Секция видео с Rutube -->
+                        <div class="col-md-4 mb-4">
+                            <h5 class="text-uppercase fw-bold">Видео о нас</h5>
+                            <div class="ratio ratio-16x9">
+                                <iframe 
+                                    src="https://rutube.ru/play/embed/938c7ce98486d2b597640b4bbb236550?autoplay=1" 
+                                    allow="autoplay; fullscreen" 
+                                    allowfullscreen 
+                                    title="Видео с Rutube"
+                                    style="border: none;"
+                                ></iframe>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Секция видео с Rutube -->
-                    <div class="col-md-4 mb-4">
-                        <h5 class="text-uppercase fw-bold">Видео о нас</h5>
-                        <div class="ratio ratio-16x9">
-                            <iframe 
-                                src="https://rutube.ru/play/embed/938c7ce98486d2b597640b4bbb236550?autoplay=1" 
-                                allow="autoplay; fullscreen" 
-                                allowfullscreen 
-                                title="Видео с Rutube"
-                                style="border: none;"
-                            ></iframe>
+                    <!-- Нижняя часть футера -->
+                    <div class="row mt-4">
+                        <div class="col text-center">
+                            <p class="mb-0 small text-light">&copy; 2025 «Кемеровский кооперативный техникум» | Все права защищены</p>
+                            <p class="mb-0 small text-light">Разработано студентами группы ИС-221</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Нижняя часть футера -->
-                <div class="row mt-4">
-                    <div class="col text-center">
-                        <p class="mb-0 small text-light">&copy; 2025 «Кемеровский кооперативный техникум» | Все права защищены</p>
-                        <p class="mb-0 small text-light">Разработано студентами группы ИС-221</p>
-                    </div>
-                </div>
-            </div>
-        </footer>
+            </footer>
         </body>
         </html>
-        HTML;
+        <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const dropdownToggle = document.getElementById('navbarDropdown');
+    const dropdownArrow = document.getElementById('dropdownArrow');
+    dropdownToggle.addEventListener('click', function () {
+        setTimeout(() => {
+            const isShown = dropdownToggle.getAttribute('aria-expanded') === 'true';
+            dropdownArrow.classList.toggle('open', isShown);
+        }, 10); // чуть подождать, пока Bootstrap обновит aria-expanded
+    });
+});
+</script>
+HTML;
 
         return $template;
     }

@@ -8,13 +8,15 @@ use App\Services\ProductFactory;
 use App\Services\OrderFactory;
 use App\Services\ValidateOrderData;
 use App\Views\OrderTemplate;
+use App\Services\Mailer;
+use App\Services\UserDBStorage;
 
 class OrderController
 {
     public function get(): string
     {
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+           
         }
 
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
@@ -31,7 +33,7 @@ class OrderController
     public function create(): string
     {
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        
         }
 
         if (!ValidateOrderData::validate($_POST)) {
@@ -47,7 +49,7 @@ class OrderController
 
         $_SESSION['basket'] = [];
         $_SESSION['flash'] = "Спасибо! Ваш заказ успешно создан и передан службе доставки.";
-        header("Location: /pizza221/");
+        header("Location: /");
         return "";
     }
 
