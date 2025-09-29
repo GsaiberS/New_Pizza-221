@@ -15,11 +15,9 @@ class BaseTemplate
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>%s</title>
-            <!-- Bootstrap CSS -->
             <link rel="stylesheet" href="../../assets/css/bootstrap.min.css">
             <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.x.x/dist/css/bootstrap.min.css" rel="stylesheet">
-            <!-- Custom CSS -->
             <style>
                 body {
                     font-family: 'Roboto', sans-serif !important;
@@ -146,6 +144,49 @@ class BaseTemplate
                     border-top: 1px solid rgba(0, 0, 0, 0.05);
                     border-radius: 0 0 1rem 1rem;
                 }
+                /* Улучшения для выпадающего меню */
+                .dropdown-menu {
+                    border-radius: 12px !important;
+                    border: none !important;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+                    margin-top: 12px;
+                }
+                .dropdown-item {
+                    color: #343a40;
+                    transition: all 0.3s ease-in-out;
+                    padding: 12px 16px;
+                    border-radius: 8px !important;
+                }
+                /* Эффект наведения на пункт меню */
+                .dropdown-item:hover {
+                    background-color: rgb(208,157,176) !important;
+                    color: #ffffff !important;
+                }
+                .dropdown-item .icon-wrapper {
+                    background-color: #f8f9fa;
+                    transition: background-color 0.3s ease, transform 0.3s ease;
+                }
+                .dropdown-item:hover .icon-wrapper {
+                    background-color: #fff;
+                    transform: scale(1.1); /* Легкое увеличение иконки */
+                }
+                .dropdown-item .icon-wrapper i {
+                    color: #888;
+                    transition: color 0.3s ease;
+                }
+                .dropdown-item:hover .icon-wrapper i {
+                    color: rgb(208,157,176);
+                }
+                .dropdown-item.logout-item:hover .icon-wrapper i {
+                    color: #dc3545; /* Красный цвет для иконки "Выход" */
+                }
+                /* Добавляем эффект "выдвижения" текста */
+                .dropdown-item .item-text {
+                    transition: transform 0.3s ease;
+                }
+                .dropdown-item:hover .item-text {
+                    transform: translateX(4px);
+                }
             </style>
             <script src="../../assets/css/bootstrap.bundle.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.x.x/dist/js/bootstrap.bundle.min.js"></script>
@@ -187,7 +228,7 @@ class BaseTemplate
 HTML;
 
 if ($user_id > 0) {
-   
+    
  
     $template .= <<<HTML
     <form action="/profile" method="POST" enctype="multipart/form-data" class="animate__animated animate__fadeInUp">
@@ -197,29 +238,23 @@ if ($user_id > 0) {
    href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
    aria-expanded="false"
    style="border-radius: 30px; transition: all 0.3s ease; gap: 10px;">
-    <!-- Аватарка пользователя -->
     <img src="{$avatar}" alt="Аватар пользователя" 
-     class="rounded-circle shadow avatar-preview"
-     style="width: 40px; height: 40px; border: 2px solid #fff; transition: transform 0.3s ease;">
-    <!-- Имя пользователя -->
+      class="rounded-circle shadow avatar-preview"
+      style="width: 40px; height: 40px; border: 2px solid #fff; transition: transform 0.3s ease;">
     <span class="d-none d-md-inline fw-semibold text-dark fs-6">{$username}</span>
-    <!-- Стрелочка -->
     <i class="fas fa-chevron-right transition-arrow" id="dropdownArrow"
-       style="transition: transform 0.3s ease;"></i>
+        style="transition: transform 0.3s ease;"></i>
 </a>
-                <!-- Выпадающее меню -->
                 <ul class="dropdown-menu animate__animated animate__fadeIn dropdown-menu-start"
                     style="border-radius: 16px; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.15); margin-top: 12px;">
-                    <!-- Профиль -->
                     <li>
                         <a class="dropdown-item d-flex align-items-center py-2 px-3"
-                           href="http://localhost/profile"
-                           style="transition: background-color 0.3s ease; border-radius: 12px;">
+                            href="http://localhost/profile">
                             <div class="icon-wrapper bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
                                  style="width: 42px; height: 42px;">
                                 <i class="fas fa-user text-secondary" style="font-size: 1.2rem;"></i>
                             </div>
-                            <div>
+                            <div class="item-text">
                                 <span class="fw-semibold">Профиль</span><br>
                                 <small class="text-muted">Настройки аккаунта</small>
                             </div>
@@ -227,29 +262,26 @@ if ($user_id > 0) {
                     </li>
                     <li>
                         <a class="dropdown-item d-flex align-items-center py-2 px-3"
-                           href="http://localhost/history"
-                           style="transition: background-color 0.3s ease; border-radius: 12px;">
+                            href="http://localhost/history">
                             <div class="icon-wrapper bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
                                  style="width: 42px; height: 42px;">
                                 <i class="fas fa-shopping-cart text-secondary" style="font-size: 1.2rem;"></i>
                             </div>
-                            <div>
+                            <div class="item-text">
                                 <span class="fw-semibold">Заказы</span><br>
                                 <small class="text-muted">История заказов</small>
                             </div>
                         </a>
                     </li>
                     <li><hr class="dropdown-divider my-1"></li>
-                    <!-- Выход -->
                     <li>
-                        <a class="dropdown-item d-flex align-items-center py-2 px-3 text-danger"
-                           href="http://localhost/logout"
-                           style="transition: background-color 0.3s ease; border-radius: 12px;">
+                        <a class="dropdown-item d-flex align-items-center py-2 px-3 text-danger logout-item"
+                            href="http://localhost/logout">
                             <div class="icon-wrapper bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
                                  style="width: 42px; height: 42px;">
                                 <i class="fas fa-sign-out-alt" style="font-size: 1.2rem;"></i>
                             </div>
-                            <div>
+                            <div class="item-text">
                                 <span class="fw-semibold">Выход</span><br>
                                 <small class="text-muted">Завершить сеанс</small>
                             </div>
@@ -301,7 +333,6 @@ HTML;
             <footer class="mt-5 bg-dark text-white py-5">
                 <div class="container">
                     <div class="row justify-content-between">
-                        <!-- Секция контактов -->
                         <div class="col-md-4 mb-4">
                             <h5 class="text-uppercase fw-bold">Контакты</h5>
                             <ul class="list-unstyled">
@@ -310,7 +341,6 @@ HTML;
                                 <li><i class="fas fa-envelope me-2"></i><span class="text-light">Email: info@pizzeria-is221.ru</span></li>
                             </ul>
                         </div>
-                        <!-- Секция социальных сетей -->
                         <div class="col-md-4 mb-4 text-center">
                             <h5 class="text-uppercase fw-bold">Мы в социальных сетях</h5>
                             <div class="d-flex justify-content-center gap-3 mt-3">
@@ -319,7 +349,6 @@ HTML;
                                 <a href="https://telegram.org" target="_blank" class="text-white"><i class="fab fa-telegram fa-2x"></i></a>
                             </div>
                         </div>
-                        <!-- Секция видео с Rutube -->
                         <div class="col-md-4 mb-4">
                             <h5 class="text-uppercase fw-bold">Видео о нас</h5>
                             <div class="ratio ratio-16x9">
@@ -333,7 +362,6 @@ HTML;
                             </div>
                         </div>
                     </div>
-                    <!-- Нижняя часть футера -->
                     <div class="row mt-4">
                         <div class="col text-center">
                             <p class="mb-0 small text-light">&copy; 2025 «Кемеровский кооперативный техникум» | Все права защищены</p>
@@ -345,17 +373,50 @@ HTML;
         </body>
         </html>
         <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const dropdownToggle = document.getElementById('navbarDropdown');
-    const dropdownArrow = document.getElementById('dropdownArrow');
-    dropdownToggle.addEventListener('click', function () {
-        setTimeout(() => {
-            const isShown = dropdownToggle.getAttribute('aria-expanded') === 'true';
-            dropdownArrow.classList.toggle('open', isShown);
-        }, 10); // чуть подождать, пока Bootstrap обновит aria-expanded
-    });
-});
-</script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const dropdownToggle = document.getElementById('navbarDropdown');
+                const dropdownArrow = document.getElementById('dropdownArrow');
+                
+                if (dropdownToggle) {
+                    dropdownToggle.addEventListener('click', function () {
+                        setTimeout(() => {
+                            const isShown = dropdownToggle.getAttribute('aria-expanded') === 'true';
+                            dropdownArrow.classList.toggle('open', isShown);
+                        }, 10);
+                    });
+                }
+
+                // Анимация наведения на кнопки выпадающего меню
+                const dropdownItems = document.querySelectorAll('.dropdown-item');
+                dropdownItems.forEach(item => {
+                    const iconWrapper = item.querySelector('.icon-wrapper');
+                    const textContent = item.querySelector('.item-text');
+
+                    if (iconWrapper && textContent) {
+                        item.addEventListener('mouseenter', () => {
+                            iconWrapper.style.transform = 'scale(1.1)';
+                            textContent.style.transform = 'translateX(4px)';
+                            
+                            // Изменение цвета иконки на наведении
+                            const icon = iconWrapper.querySelector('i');
+                            if (item.classList.contains('logout-item')) {
+                                icon.style.color = '#dc3545';
+                            } else {
+                                icon.style.color = 'rgb(208,157,176)';
+                            }
+                        });
+
+                        item.addEventListener('mouseleave', () => {
+                            iconWrapper.style.transform = 'scale(1)';
+                            textContent.style.transform = 'translateX(0)';
+
+                            const icon = iconWrapper.querySelector('i');
+                            icon.style.color = ''; // Возвращаем исходный цвет
+                        });
+                    }
+                });
+            });
+        </script>
 HTML;
 
         return $template;

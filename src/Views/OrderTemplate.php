@@ -32,7 +32,6 @@ HTML;
         if (!empty($arr)) {
             foreach ($arr as $product) {
                 // ИСПРАВЛЕНИЕ: ваш шаблон корзины ожидает 'name', 'price' и 'quantity'
-                // но получает 'name', 'price' и 'count_item' из BasketDBStorage
                 $name = htmlspecialchars($product['name']);
                 $price = htmlspecialchars($product['price']);
                 $quantity = htmlspecialchars($product['quantity']);
@@ -45,6 +44,12 @@ HTML;
                 $sum = $price * $quantity;
                 $all_sum += $sum;
 
+                // --- ЛОГИКА ДЛЯ ДИНАМИЧЕСКОГО СЧЕТЧИКА ---
+                $decreaseAction = ($quantity > 1) ? '/basket_decrease' : '/basket_remove';
+                $decreaseIcon = ($quantity > 1) ? '<i class="fas fa-minus"></i>' : '<i class="fas fa-trash-alt"></i>';
+                $decreaseClass = ($quantity > 1) ? 'btn-outline-secondary' : 'btn-danger';
+                // ------------------------------------------
+
                 $content .= <<<LINE
                 <div class="card mb-3 product-card-animated" data-aos="fade-up">
                     <div class="row g-0 align-items-center">
@@ -55,15 +60,33 @@ HTML;
                             <div class="card-body">
                                 <h5 class="card-title mb-1">{$name}</h5>
                                 <p class="card-text mb-1"><small class="text-muted">Цена за единицу: {$price} ₽</small></p>
-                                <p class="card-text mb-1">Количество: {$quantity} ед.</p>
+                                
                                 <div class="d-flex justify-content-between align-items-center mt-2">
                                     <p class="card-text mb-0 fw-bold">Итого: <span class="text-success">{$sum} ₽</span></p>
-                                    <form action="/basket_remove" method="POST">
-                                        <input type="hidden" name="id" value="{$product['id']}">
-                                        <button type="submit" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash-alt me-1"></i> Удалить
-                                        </button>
-                                    </form>
+                                    
+                                    <!-- ДИНАМИЧЕСКИЙ СЧЕТЧИК ПОЗИЦИЙ -->
+                                    <div class="btn-group shadow-sm" role="group" aria-label="Quantity controls" style="border-radius: 50px;">
+                                        <!-- КНОПКА УМЕНЬШЕНИЯ / УДАЛЕНИЯ -->
+                                        <form action="{$decreaseAction}" method="POST" class="d-inline-block">
+                                            <input type="hidden" name="id" value="{$product['id']}">
+                                            <button type="submit" class="btn {$decreaseClass} btn-sm" style="border-top-left-radius: 50px; border-bottom-left-radius: 50px; padding: 0.25rem 0.6rem;">
+                                                {$decreaseIcon}
+                                            </button>
+                                        </form>
+
+                                        <!-- ИНДИКАТОР КОЛИЧЕСТВА -->
+                                        <span class="btn btn-light btn-sm fw-bold border-top border-bottom border-secondary border-opacity-25 mx-0" style="pointer-events: none; width: 40px; padding: 0.25rem 0.6rem;">{$quantity}</span>
+                                        
+                                        <!-- КНОПКА УВЕЛИЧЕНИЯ -->
+                                        <form action="/basket_increase" method="POST" class="d-inline-block">
+                                            <input type="hidden" name="id" value="{$product['id']}">
+                                            <button type="submit" class="btn btn-success btn-sm" style="border-top-right-radius: 50px; border-bottom-right-radius: 50px; padding: 0.25rem 0.6rem;">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <!-- КОНЕЦ СЧЕТЧИКА -->
+                                    
                                 </div>
                             </div>
                         </div>
@@ -177,7 +200,19 @@ HTML;
                 orderForm.addEventListener('submit', function (event) {
                     if (!selectedPaymentInput.value) {
                         event.preventDefault();
-                        alert('Пожалуйста, выберите способ оплаты.');
+                        // Заменена alert на более подходящую реализацию в реальном проекте
+                        console.error('Пожалуйста, выберите способ оплаты.'); 
+                        // Здесь нужно будет добавить модальное окно или уведомление, так как alert() не работает в iframe.
+                        
+                        // Временное решение для уведомления пользователя
+                        const orderCard = document.querySelector('.order-form-card');
+                        let errorMsg = orderCard.querySelector('.alert-danger');
+                        if (!errorMsg) {
+                            errorMsg = document.createElement('div');
+                            errorMsg.className = 'alert alert-danger mt-3';
+                            errorMsg.textContent = 'Пожалуйста, выберите способ оплаты, чтобы продолжить.';
+                            orderCard.querySelector('.card-body').insertBefore(errorMsg, orderForm);
+                        }
                     }
                 });
             });
