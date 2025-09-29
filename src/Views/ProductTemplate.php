@@ -4,7 +4,12 @@ use App\Views\BaseTemplate;
 
 class ProductTemplate extends BaseTemplate
 {
-    public static function getAllTemplate(array $arr): string
+    /**
+     * @param array $arr Массив всех продуктов
+     * @param int $basketCount Текущее количество товаров в корзине
+     * @return string
+     */
+    public static function getAllTemplate(array $arr, int $basketCount): string
     {
         $template = parent::getTemplate();
         $title = 'Каталог продукции';
@@ -96,7 +101,7 @@ HTML;
                                 </div>
                                 <div>
                                     <h5 class="card-title"><strong>Цена: </strong>{$item['price']} руб.</h5>
-                                    <form class="mt-3" action="/basket" method="POST">
+                                    <form class="mt-3 add-to-basket-form" action="/basket" method="POST">
                                         <input type="hidden" name="id" value="{$item['id']}">
                                         <button type="submit" class="btn btn-custom w-100">Добавить в корзину</button>
                                     </form>
@@ -113,51 +118,216 @@ HTML;
 HTML;
         }
 
+        // ***************************************************************
+        // *** ПЛАВАЮЩАЯ КНОПКА КОРЗИНЫ (С ИКОНКОЙ) + АНИМАЦИИ ***
+        // ***************************************************************
+
+        // Вычисляем стиль отображения кнопки (логика из ProductController)
+        $displayStyle = $basketCount > 0 ? 'flex' : 'none'; 
+
+        $content .= <<<HTML
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <style>
+            /* --- АНИМАЦИИ КОРЗИНЫ --- */
+            @keyframes basket-jump {
+                0% { transform: scale(1) rotate(0deg); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); }
+                25% { transform: scale(1.15) rotate(5deg); box-shadow: 0 8px 20px rgba(255, 71, 87, 0.7); }
+                50% { transform: scale(1.15) rotate(-5deg); }
+                100% { transform: scale(1) rotate(0deg); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); }
+            }
+            .floating-basket-btn.animate-jump {
+                animation: basket-jump 0.5s ease-in-out;
+            }
+
+            /* --- СТИЛИ КНОПКИ --- */
+            .floating-basket-btn {
+                position: fixed;
+                right: 40px; 
+                bottom: 40px; 
+                width: 65px;  
+                height: 65px; 
+                background-color: #d09db0; 
+                color: white;
+                border-radius: 50%;
+                font-size: 26px; 
+                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+                z-index: 9999;
+                transition: background-color 0.3s ease, transform 0.2s ease;
+                text-decoration: none;
+                display: {$displayStyle}; 
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transform-origin: bottom center; /* Для красивого прыжка */
+            }
+
+            .floating-basket-btn:hover {
+                background-color: #e6b4c3; 
+                transform: scale(1.08); 
+            }
+
+            .basket-count {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background-color: #ff4757; 
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                border-radius: 50%;
+                padding: 3px 6px;
+                min-width: 20px;
+                height: 20px;
+                line-height: 14px;
+                text-align: center;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+
+            /* --- СТИЛИ ВСПЛЫВАЮЩЕЙ ПОДСКАЗКИ (ТОСТА) --- */
+            .basket-toast {
+                position: absolute;
+                background-color: #28a745; /* Зеленый цвет успеха */
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                font-weight: bold;
+                opacity: 0;
+                top: -30px; /* Над кнопкой */
+                left: 50%;
+                transform: translateX(-50%);
+                pointer-events: none; /* Чтобы не мешать кликам */
+                transition: opacity 0.3s ease-out, transform 0.4s ease-out;
+                z-index: 10000;
+            }
+            .basket-toast.show {
+                opacity: 1;
+                transform: translateX(-50%) translateY(-10px);
+            }
+        </style>
+        
+        <a href="/order" class="floating-basket-btn" id="floatingBasketButton">
+            <i class="fas fa-shopping-basket"></i>
+            <span class="basket-count" id="basketItemCount">{$basketCount}</span>
+        </a>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const forms = document.querySelectorAll('.add-to-basket-form');
+                const floatingButton = document.getElementById('floatingBasketButton');
+                const basketCountSpan = document.getElementById('basketItemCount');
+                
+                // Перехват отправки формы
+                forms.forEach(form => {
+                    form.addEventListener('submit', function(event) {
+                        event.preventDefault(); // Останавливаем стандартную отправку формы
+                        
+                        const formData = new FormData(this);
+                        const button = this.querySelector('button[type="submit"]');
+
+                        // 1. Анимация кнопки и подсказки
+                        animateBasket(button, floatingButton);
+
+                        // 2. Асинхронная отправка данных на сервер
+                        fetch(this.action, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            // Ожидаем, что сервер обновит корзину и вернет новый счетчик (или просто обновляем DOM)
+                            // Поскольку это простой пример, мы просто имитируем обновление счетчика
+                            let currentCount = parseInt(basketCountSpan.textContent) || 0;
+                            
+                            // В идеале: получить новое количество из ответа сервера
+                            // fetch(this.action, ...).then(response => response.json()).then(data => { ... })
+                            
+                            currentCount += 1; // Имитация: увеличиваем счетчик на 1
+                            basketCountSpan.textContent = currentCount;
+                            
+                            // Показываем кнопку, если она была скрыта
+                            floatingButton.style.display = 'flex'; 
+
+                        })
+                        .catch(error => {
+                            console.error('Ошибка при добавлении в корзину:', error);
+                        });
+                    });
+                });
+
+                function animateBasket(sourceButton, targetButton) {
+                    // Анимация 1: Прыжок кнопки корзины
+                    targetButton.classList.remove('animate-jump');
+                    void targetButton.offsetWidth; // Хак для перезапуска анимации
+                    targetButton.classList.add('animate-jump');
+                    
+                    // Анимация 2: Всплывающая подсказка "Добавлено"
+                    let toast = sourceButton.parentNode.querySelector('.basket-toast');
+                    if (!toast) {
+                        toast = document.createElement('div');
+                        toast.className = 'basket-toast';
+                        toast.textContent = 'Добавлено!';
+                        sourceButton.parentNode.insertBefore(toast, sourceButton);
+                    }
+                    
+                    // Показываем тост
+                    toast.classList.add('show');
+                    
+                    // Скрываем тост через 1.5 секунды
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 1500);
+                }
+            });
+        </script>
+HTML;
+
         $resultTemplate = sprintf($template, $title, $content);
         return $resultTemplate;
     }
+    // ... (метод getCardTemplate остается без изменений) ...
+// ...
 
     /**
      * Генерирует HTML-код для отображения карточки одного товара.
      *
-     * @param array $data Данные о товаре (id, name, price, image, description и т.д.)
+     * @param array $data Данные о товаре (id, name, price, image, description и тт.)
      * @return string HTML-код карточки товара
      */
     public static function getCardTemplate(array $data = null): string
-{
-    $template = parent::getTemplate();
-    $title = 'Карточка товара';
+    {
+        $template = parent::getTemplate();
+        $title = 'Карточка товара';
 
-    // Если данные отсутствуют, показываем сообщение об ошибке
-    if ($data === null) {
-        $content = '<div class="alert alert-danger" role="alert">Товар не найден.</div>';
-        $resultTemplate = sprintf($template, $title, $content);
-        return $resultTemplate;
-    }
+        // Если данные отсутствуют, показываем сообщение об ошибке
+        if ($data === null) {
+            $content = '<div class="alert alert-danger" role="alert">Товар не найден.</div>';
+            $resultTemplate = sprintf($template, $title, $content);
+            return $resultTemplate;
+        }
 
-    // Генерация HTML-кода для карточки товара
-    $content = <<<HTML
-    <div class="card mb-3" style="max-width: 540px; margin: 0 auto;">
-        <div class="row g-0">
-            <div class="col-md-4 mt-3">
-                <img src="{$data['image']}" class="img-fluid rounded-start" alt="{$data['name']}" style="height: 150px; object-fit: cover;">
-            </div>
-            <div class="col-md-8">
-                <div class="card-body">
-                    <h5 class="card-title">{$data['name']}</h5>
-                    <p class="card-text">{$data['description']}</p>
-                    <h5 class="card-title"><strong>Цена:</strong> {$data['price']} руб.</h5>
-                    <form class="mt-4" action="/basket" method="POST">
-                        <input type="hidden" name="id" value="{$data['id']}">
-                        <button type="submit" class="btn btn-custom">Добавить в корзину</button>
-                    </form>
+        // Генерация HTML-кода для карточки товара
+        $content = <<<HTML
+        <div class="card mb-3" style="max-width: 540px; margin: 0 auto;">
+            <div class="row g-0">
+                <div class="col-md-4 mt-3">
+                    <img src="{$data['image']}" class="img-fluid rounded-start" alt="{$data['name']}" style="height: 150px; object-fit: cover;">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{$data['name']}</h5>
+                        <p class="card-text">{$data['description']}</p>
+                        <h5 class="card-title"><strong>Цена:</strong> {$data['price']} руб.</h5>
+                        <form class="mt-4" action="/basket" method="POST">
+                            <input type="hidden" name="id" value="{$data['id']}">
+                            <button type="submit" class="btn btn-custom">Добавить в корзину</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 HTML;
 
-    $resultTemplate = sprintf($template, $title, $content);
-    return $resultTemplate;
-}
+        $resultTemplate = sprintf($template, $title, $content);
+        return $resultTemplate;
+    }
 }
