@@ -29,7 +29,7 @@ class OrderDataTest extends TestCase
         $invalidFio = [
             'fio' => [],
         ];
-        $this->assertSame(true, 
+        $this->assertSame(false, 
                           $this->obj->validate($invalidFio));
     }
 
