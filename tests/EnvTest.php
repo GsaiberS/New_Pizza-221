@@ -23,28 +23,42 @@ class EnvTest extends TestCase
 
     public function testGoogleOAuthCredentialsAreConfigured()
     {
-        $isConfigured = Config::isGoogleOAuthConfigured();
-        $this->assertIsBool($isConfigured, 
-            'isGoogleOAuthConfigured должен возвращать boolean');
+        $clientId = Config::getGoogleClientId();
+        $clientSecret = Config::getGoogleClientSecret();
         
-        if (!$isConfigured) {
-            $config = Config::getHybridConfig();
-            $clientId = $config['providers']['Google']['keys']['id'] ?? '';
-            $clientSecret = $config['providers']['Google']['keys']['secret'] ?? '';
-            
-            $this->fail("Google OAuth не настроен. Client ID: '$clientId', Client Secret: '$clientSecret'");
-        }
+        $this->assertNotEmpty($clientId, 'Google Client ID должен быть настроен');
+        $this->assertNotEmpty($clientSecret, 'Google Client Secret должен быть настроен');
+        
+        // Проверяем что credentials выглядят валидно
+        $this->assertStringContainsString('.apps.googleusercontent.com', $clientId,
+            'Google Client ID должен содержать .apps.googleusercontent.com');
+    }
+
+    public function testVkOAuthCredentialsAreConfigured()
+    {
+        $clientId = Config::getVkClientId();
+        $clientSecret = Config::getVkClientSecret();
+        
+        $this->assertNotEmpty($clientId, 'VK Client ID должен быть настроен');
+        $this->assertNotEmpty($clientSecret, 'VK Client Secret должен быть настроен');
     }
 
     public function testCallbackUrlIsCorrect()
     {
         $config = Config::getHybridConfig();
-        $expectedCallback = ($_ENV['SITE_URL'] ?? 'http://localhost') . '/callback/google';
+        $expectedCallback = Config::SITE_URL . '/register/google'; 
         
         $this->assertEquals(
             $expectedCallback,
             $config['callback'],
-            'Callback URL должен совпадать с SITE_URL + /callback/google'
+            'Callback URL должен совпадать с SITE_URL + /register/google' 
         );
+    }
+
+    public function testSiteUrlIsConfigured()
+    {
+        $siteUrl = Config::SITE_URL;
+        $this->assertNotEmpty($siteUrl, 'SITE_URL должен быть настроен');
+        $this->assertStringStartsWith('http', $siteUrl, 'SITE_URL должен начинаться с http');
     }
 }

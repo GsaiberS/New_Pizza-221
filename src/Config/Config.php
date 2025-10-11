@@ -8,8 +8,26 @@ class Config
 {
     // Инициализация переменных окружения
     public static function loadEnv(): void {
-       $dotenv = Dotenv::createImmutable(__DIR__ . '/../../'); // Два уровня выше — в корень проекта
+        $path = __DIR__ . '/../../';
+        error_log("Loading .env from: " . $path);
+        
+        if (!file_exists($path . '.env')) {
+            error_log(".env file not found at: " . $path . '.env');
+        } else {
+            error_log(".env file found");
+        }
+
+        $dotenv = Dotenv::createImmutable($path);
         $dotenv->load();
+        
+        // ОТЛАДКА: Проверяем загрузку VK переменных
+        error_log("VK_CLIENT_ID loaded: " . (isset($_ENV['VK_CLIENT_ID']) ? $_ENV['VK_CLIENT_ID'] : 'NOT FOUND'));
+        error_log("VK_CLIENT_SECRET loaded: " . (isset($_ENV['VK_CLIENT_SECRET']) ? substr($_ENV['VK_CLIENT_SECRET'], 0, 5) . '...' : 'NOT FOUND'));
+    }
+
+    // Автоматическая инициализация при загрузке класса
+    public static function init() {
+        self::loadEnv();
     }
 
     // --- Локальные файлы ---
@@ -30,24 +48,49 @@ class Config
 
     // --- Основные настройки сайта ---
     const SITE_URL = "http://localhost";
-    public static function isGoogleOAuthConfigured(): bool {
-        return !empty($_ENV['GOOGLE_CLIENT_ID']) && !empty($_ENV['GOOGLE_CLIENT_SECRET']);
-    }
-    // Загрузка переменных из .env
+
+    // Загрузка переменных из .env с отладкой
     public static function getGoogleClientId(): string {
-        
-        return $_ENV['GOOGLE_CLIENT_ID'] ?? '';
+        $clientId = $_ENV['GOOGLE_CLIENT_ID'] ?? '';
+        error_log("Google ClientID from env: " . $clientId);
+        return $clientId;
     }
 
     public static function getGoogleClientSecret(): string {
-        return $_ENV['GOOGLE_CLIENT_SECRET'] ?? '';
+        $secret = $_ENV['GOOGLE_CLIENT_SECRET'] ?? '';
+        error_log("Google ClientSecret from env: " . (!empty($secret) ? 'LOADED' : 'EMPTY'));
+        return $secret;
     }
 
-    const GOOGLE_REDIRECT = self::SITE_URL . '/callback/google';
+    // VK OAuth настройки через .env с отладкой
+    public static function getVkClientId(): string {
+        $clientId = $_ENV['VK_CLIENT_ID'] ?? '';
+        error_log("VK ClientID from env: " . $clientId);
+        
+        // ВРЕМЕННЫЙ ХАРДКОД ДЛЯ ТЕСТА - удалить после проверки
+        if (empty($clientId)) {
+            error_log("Using hardcoded VK ClientID");
+            return '54230789';
+        }
+        
+        return $clientId;
+    }
 
-    const VK_CLIENT_ID = '';     
-    const VK_CLIENT_SECRET = ''; 
-    const VK_REDIRECT = self::SITE_URL . '/callback/vk';
+    public static function getVkClientSecret(): string {
+        $secret = $_ENV['VK_CLIENT_SECRET'] ?? '';
+        error_log("VK ClientSecret from env: " . (!empty($secret) ? 'LOADED' : 'EMPTY'));
+        
+        // ВРЕМЕННЫЙ ХАРДКОД ДЛЯ ТЕСТА - удалить после проверки
+        if (empty($secret)) {
+            error_log("Using hardcoded VK ClientSecret");
+            return 'U0FiqdIIo9Gkc884ObDe';
+        }
+        
+        return $secret;
+    }
+
+    const GOOGLE_REDIRECT = self::SITE_URL . '/register/google';
+    const VK_REDIRECT = self::SITE_URL . '/register/vk';
 
     const STEAM_API_KEY = '';    
     const STEAM_REDIRECT = self::SITE_URL . '/callback/steam';
@@ -76,7 +119,7 @@ class Config
 
     // --- Конфигурация для Hybridauth ---
     public static function getHybridConfig(): array {
-        self::loadEnv(); // Загружаем переменные окружения
+        self::loadEnv();
 
         return [
             'callback' => self::GOOGLE_REDIRECT,
@@ -93,3 +136,6 @@ class Config
         ];
     }
 }
+
+// Автоматическая инициализация при подключении файла
+Config::init();

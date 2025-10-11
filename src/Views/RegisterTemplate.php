@@ -72,6 +72,15 @@ class RegisterTemplate extends BaseTemplate
                                 <a href="/register/google" class="btn w-100 hover-scale" style="background: #db4437; color: white; border-radius: 10px; font-size: 1.1rem; transition: all 0.6s ease-in-out;">
                                     <i class="fab fa-google me-2"></i> Войти через Google
                                 </a>
+                                <a href="/register/vk" class="btn w-100 hover-scale mt-3" style="background: #4c75a3; color: white; border-radius: 10px; font-size: 1.1rem; transition: all 0.6s ease-in-out;">
+                                    <i class="fab fa-vk me-2"></i> Войти через ВКонтакте
+                                </a>
+                                <a href="/register/steam" class="btn w-100 hover-scale mt-3" style="background: #171a21; color: white; border-radius: 10px; font-size: 1.1rem; transition: all 0.6s ease-in-out;">
+                                    <i class="fab fa-steam me-2"></i> Войти через Steam
+                                </a>
+                                <a href="/register/yandex" class="btn w-100 hover-scale mt-3" style="background: #FFCC00; color: #000; border-radius: 10px; font-size: 1.1rem; transition: all 0.6s ease-in-out;">
+                                    <i class="fab fa-yandex me-2"></i> Войти через Яндекс
+                                </a>
                             </div>
 
                             <div class="text-center mt-4">

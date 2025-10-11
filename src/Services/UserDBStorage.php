@@ -75,13 +75,19 @@ class UserDBStorage extends DBStorage implements ISaveStorage
     /**
      * Получение данных пользователя по ID
      */
+    /**
+ * Получение данных пользователя по ID
+ */
     public function getUserById(int $userId): array
     {
         $stmt = $this->connection->prepare(
             "SELECT id, username, email, address, phone, avatar FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Если пользователь не найден, возвращаем пустой массив вместо false
+        return $user ?: [];
     }
 
     /**
@@ -131,6 +137,44 @@ class UserDBStorage extends DBStorage implements ISaveStorage
             error_log("Ошибка при получении истории заказов: " . $e->getMessage());
             return null;
         }
+    
     }
+    /**
+ * Создание пользователя (для OAuth и обычной регистрации)
+ */
+public function create(array $data): bool
+{
+    $sql = "INSERT INTO `users`
+    (`username`, `email`, `password`, `token`, `is_verified`, `oauth_provider`, `oauth_id`, `avatar`) 
+    VALUES (:username, :email, :password, :token, :is_verified, :oauth_provider, :oauth_id, :avatar)";
+
+    $sth = $this->connection->prepare($sql);
+
+    $result = $sth->execute([
+        'username' => $data['username'],
+        'email' => $data['email'],
+        'password' => $data['password'] ?? null,
+        'token' => $data['token'] ?? '',
+        'is_verified' => $data['is_verified'] ?? 0,
+        'oauth_provider' => $data['oauth_provider'] ?? null,
+        'oauth_id' => $data['oauth_id'] ?? null,
+        'avatar' => $data['avatar'] ?? null
+    ]);
+
+    return $result;
+}
+/**
+ * Поиск пользователя по email
+ */
+public function findByEmail(string $email): ?array
+{
+    $stmt = $this->connection->prepare(
+        "SELECT * FROM users WHERE email = ?"
+    );
+    $stmt->execute([$email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    return $user ?: null;
+}
 }
 
