@@ -66,6 +66,14 @@ class RegisterTemplate extends BaseTemplate
                             </form>
 
                             <!-- Ссылка на вход -->
+                             <!-- Вход через Google -->
+                            <div class="text-center mt-4">
+                                <p class="text-muted mb-2">или</p>
+                                <a href="/register/google" class="btn w-100 hover-scale" style="background: #db4437; color: white; border-radius: 10px; font-size: 1.1rem; transition: all 0.6s ease-in-out;">
+                                    <i class="fab fa-google me-2"></i> Войти через Google
+                                </a>
+                            </div>
+
                             <div class="text-center mt-4">
                                 <p class="text-muted">Уже есть аккаунт? <a href="/login" class="hover-underline" style="color: rgb(208,157,176); text-decoration: none; font-weight: bold;">Войти</a></p>
                             </div>

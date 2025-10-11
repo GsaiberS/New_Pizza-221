@@ -106,7 +106,7 @@ HTML;
         $content = <<<HTML
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
+    
     body {
         font-family: 'Poppins', sans-serif;
         background-color: #f9f9f9;
@@ -201,7 +201,7 @@ HTML;
 
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
+<link rel="icon" type="image/x-icon" href="/assets/image/ico.ico">
 <main class="container mt-5">
     <!-- Hero Section -->
     <section class="hero-section">

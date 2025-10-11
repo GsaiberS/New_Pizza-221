@@ -8,11 +8,15 @@ class AboutTemplate extends BaseTemplate
     {
         $template = parent::getTemplate();
         $title = 'О нас';
+        
+        // --- Добавляем ссылку на фавиконку в секцию HEAD ---
+        $faviconLink = '<link rel="icon" type="image/x-icon" href="/assets/image/ico.ico">';
+        
         $content = <<<HTML
-
+        
         <!-- Подключение Font Awesome -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
+        
         <div class="container mt-5">
             <h1 class="text-center mb-4">О нас</h1>
             <p class="lead text-center">
@@ -74,7 +78,19 @@ class AboutTemplate extends BaseTemplate
         </div>
 HTML;
 
-        $resultTemplate = sprintf($template, $title, $content);
+        // Вставляем ссылку на фавиконку перед началом основного контента
+        $templateParts = explode('</head>', $template, 2);
+        if (count($templateParts) === 2) {
+            // Если в базовом шаблоне есть закрывающий тег </head>, вставляем фавиконку туда
+            $templateWithFavicon = $templateParts[0] . $faviconLink . '</head>' . $templateParts[1];
+            $resultTemplate = sprintf($templateWithFavicon, $title, $content);
+        } else {
+            // Если мы работаем с упрощенным шаблоном, просто добавляем в начало контента.
+            // Примечание: для корректной работы фавиконка должна быть в <head>.
+            $content = $faviconLink . $content;
+            $resultTemplate = sprintf($template, $title, $content);
+        }
+        
         return $resultTemplate;
     }
 }

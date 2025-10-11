@@ -107,9 +107,16 @@ class Router {
                 // Этот блок теперь обрабатывает ТОЛЬКО /order (корзину)
                 $orderController = new OrderController();
                 return $orderController->get();
+            // В роутере обновите case "register":
             case "register":
                 $registerController = new RegisterController();
+                if (isset($pieces[2]) && $pieces[2] === "google") {
+                    $registerController->googleAuth();
+                    exit;
+                }
                 return $registerController->get();
+
+
             case "verify":
                 $registerController = new RegisterController();
                 $token = (isset($pieces[2])) ? $pieces[2] : null;
