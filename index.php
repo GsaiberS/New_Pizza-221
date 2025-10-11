@@ -2,8 +2,7 @@
 // ПЕРВЫМ делом - автозагрузчик Composer
 require_once(__DIR__ . '/vendor/autoload.php');
 
-// ВТОРЫМ - загружаем .env (теперь Dotenv доступен)
-require_once(__DIR__ . '/load_env.php');
+
 
 use App\Router\Router;
 

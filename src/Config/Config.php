@@ -8,7 +8,7 @@ class Config
 {
     // Инициализация переменных окружения
     public static function loadEnv(): void {
-        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../'); // Два уровня выше — в корень проекта
+       $dotenv = Dotenv::createImmutable(__DIR__ . '/../../'); // Два уровня выше — в корень проекта
         $dotenv->load();
     }
 
