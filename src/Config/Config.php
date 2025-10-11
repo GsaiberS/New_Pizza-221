@@ -30,9 +30,12 @@ class Config
 
     // --- Основные настройки сайта ---
     const SITE_URL = "http://localhost";
-
+    public static function isGoogleOAuthConfigured(): bool {
+        return !empty($_ENV['GOOGLE_CLIENT_ID']) && !empty($_ENV['GOOGLE_CLIENT_SECRET']);
+    }
     // Загрузка переменных из .env
     public static function getGoogleClientId(): string {
+        
         return $_ENV['GOOGLE_CLIENT_ID'] ?? '';
     }
 
