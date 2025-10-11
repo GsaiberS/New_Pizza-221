@@ -38,43 +38,43 @@ class RegisterController {
     }
 
     public function create(): string {
-        $arr = [
-            'username' => strip_tags($_POST['username'] ?? ''),
-            'email' => strip_tags($_POST['email'] ?? ''),
-            'password' => $_POST['password'] ?? '',
-            'confirm_password' => $_POST['confirm_password'] ?? '',
-        ];
+    $arr = [
+        'username' => strip_tags($_POST['username'] ?? ''),
+        'email' => strip_tags($_POST['email'] ?? ''),
+        'password' => $_POST['password'] ?? '',
+        'confirm_password' => $_POST['confirm_password'] ?? '',
+    ];
 
-        if (!ValidateRegisterData::validate($arr)) {
-            header("Location: /register");
-            return "";
-        }
-
-        $hashed_password = password_hash($arr['password'], PASSWORD_DEFAULT);
-        $verification_token = bin2hex(random_bytes(16));
-
-        $arr['password'] = $hashed_password;
-        $arr['token'] = $verification_token;
-
-        $model = UserFactory::createUser();
-        
-        try {
-            $model->saveData($arr);
-            
-            Mailer::sendMailUserConfirmation(
-                $arr['email'],
-                $verification_token,
-                $arr['username']
-            );
-
-            $_SESSION['flash'] = "Спасибо за регистрацию! На ваш email отправлено письмо для подтверждения регистрации.";
-        } catch (\Exception $e) {
-            $_SESSION['flash'] = "Ошибка при регистрации: " . $e->getMessage();
-        }
-
-        header("Location: /");
-        return "";
+    if (!ValidateRegisterData::validate($arr)) {
+        header("Location: /register");
+        exit; // Добавьте exit после header
     }
+
+    $hashed_password = password_hash($arr['password'], PASSWORD_DEFAULT);
+    $verification_token = bin2hex(random_bytes(16));
+
+    $arr['password'] = $hashed_password;
+    $arr['token'] = $verification_token;
+
+    $model = UserFactory::createUser();
+    
+    try {
+        $model->saveData($arr);
+        
+        Mailer::sendMailUserConfirmation(
+            $arr['email'],
+            $verification_token,
+            $arr['username']
+        );
+
+        $_SESSION['flash'] = "Спасибо за регистрацию! На ваш email отправлено письмо для подтверждения регистрации.";
+    } catch (\Exception $e) {
+        $_SESSION['flash'] = "Ошибка при регистрации: " . $e->getMessage();
+    }
+
+    header("Location: /");
+    exit; // Добавьте exit после header
+}
 
     public function googleAuth(): void
     {

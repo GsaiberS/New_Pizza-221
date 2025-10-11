@@ -1,15 +1,24 @@
 <?php 
-require_once("./vendor/autoload.php");
+// ПЕРВЫМ делом - автозагрузчик Composer
+require_once(__DIR__ . '/vendor/autoload.php');
+
+// ВТОРЫМ - загружаем .env (теперь Dotenv доступен)
+require_once(__DIR__ . '/load_env.php');
 
 use App\Router\Router;
 
-// Обновляем глобальные переменные - данными из сессии
-$user_id=0; $username= "";
 session_start();
-if (isset($_SESSION['user_id']))
+
+// Обновляем глобальные переменные - данными из сессии
+$user_id = 0;
+$username = "";
+
+if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
-if (isset($_SESSION['username']))
+}
+if (isset($_SESSION['username'])) {
     $username = $_SESSION['username'];
+}
 
 $router = new Router();
 $url = $_SERVER['REQUEST_URI'];
