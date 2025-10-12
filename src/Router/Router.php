@@ -32,7 +32,7 @@ class Router {
         
         $userController = new UserController();
         $basketController = new BasketController();
-        $orderController = new OrderController(); // Добавляем создание OrderController
+        $orderController = new OrderController();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             switch ($resource) {
@@ -52,6 +52,7 @@ class Router {
                     $basketController->clear();
                     break;
                 case 'profile':
+                    // ИСПРАВЛЕНИЕ: вызываем updateProfile для POST запросов на /profile
                     $userController->updateProfile();
                     break;
                 case 'register':
@@ -61,13 +62,14 @@ class Router {
                 case 'login':
                     $userController->login();
                     break;
-                case 'order': // ДОБАВЛЯЕМ ЭТОТ КЕЙС
+                case 'order':
                     $orderController->create();
                     break;
             }
             exit(); 
         }
 
+        // GET запросы
         if ($resource === "order" && isset($pieces[2]) && is_numeric($pieces[2])) {
             $orderId = (int)$pieces[2];
             return $orderController->getDetails($orderId);
@@ -123,6 +125,7 @@ class Router {
                 $id = (isset($pieces[3])) ? intval($pieces[3]) : null;
                 return $productController->get($id);
             case "profile":
+                // ИСПРАВЛЕНИЕ: для GET запросов на /profile показываем форму
                 return $userController->profile();
             default:
                 $home = new HomeController();

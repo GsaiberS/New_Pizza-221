@@ -161,15 +161,15 @@ class UserTemplate extends BaseTemplate
 
         /* Компактные отступы для страницы входа */
         .login-wrapper {
-    padding: 1rem 0;
-    min-height: 70vh;
-    display: flex;
-    align-items: center;
-}
+            padding: 1rem 0;
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+        }
         </style>
 
-        <div class="container-fluid login-page-wrapper">
-            <div class="row justify-content-center align-items-center w-100">
+        <div class="container login-wrapper">
+            <div class="row justify-content-center align-items-center w-100 mx-0">
                 <div class="col-xl-4 col-lg-5 col-md-6">
                     <div class="login-container fade-in-up">
                         <div class="login-header fade-in-up">
@@ -223,9 +223,6 @@ FORMA;
     }
 
     /**
-     * Форма редактирования профиля
-     */
-        /**
      * Форма редактирования профиля
      */
     public static function getProfileForm(array $userData = []): string {
@@ -302,6 +299,7 @@ FORMA;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.9rem;
+            position: relative;
         }
         
         .avatar-upload-btn:hover {
@@ -310,7 +308,13 @@ FORMA;
         }
         
         .avatar-upload-btn input {
-            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
         }
         
         .form-input-group {
@@ -370,6 +374,7 @@ FORMA;
             overflow: hidden;
             width: 100%;
             margin-top: 0.5rem;
+            cursor: pointer;
         }
         
         .btn-save::before {
@@ -406,72 +411,121 @@ FORMA;
                 transform: translateY(0);
             }
         }
+
+        /* Фикс для контейнера профиля */
+        .profile-wrapper {
+            padding: 1rem 0;
+        }
         </style>
 
-        <div class="profile-container fade-in-up">
-            <div class="profile-header fade-in-up">
-                <h3>Мой профиль</h3>
-                <p>Управление настройками аккаунта</p>
+        <div class="container profile-wrapper">
+            <div class="profile-container fade-in-up">
+                <div class="profile-header fade-in-up">
+                    <h3>Мой профиль</h3>
+                    <p>Управление настройками аккаунта</p>
+                </div>
+                
+                <form action="/profile" method="POST" enctype="multipart/form-data" id="profileForm">
+                    <div class="avatar-section fade-in-up">
+                        <img src="{$avatar}" alt="Аватар пользователя" class="avatar-preview" id="avatarPreview">
+                        <div class="avatar-upload-btn">
+                            <i class="fas fa-camera me-2"></i>Сменить аватар
+                            <input type="file" name="avatar" accept="image/*" id="avatarInput">
+                        </div>
+                    </div>
+                    
+                    <div class="form-input-group fade-in-up">
+                        <div class="input-icon">
+                            <i class="fas fa-user-edit"></i>
+                        </div>
+                        <input type="text" name="username" class="form-control" value="{$username}" placeholder="Имя пользователя" required>
+                    </div>
+                    
+                    <div class="form-input-group fade-in-up">
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <input type="email" name="email" class="form-control" value="{$email}" placeholder="Email" required>
+                    </div>
+                    
+                    <div class="form-input-group fade-in-up">
+                        <div class="input-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <input type="text" name="address" class="form-control" value="{$address}" placeholder="Адрес доставки">
+                    </div>
+                    
+                    <div class="form-input-group fade-in-up">
+                        <div class="input-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <input type="text" name="phone" class="form-control" value="{$phone}" placeholder="Номер телефона">
+                    </div>
+                    
+                    <button type="submit" class="btn-save fade-in-up">
+                        <i class="fas fa-save me-2"></i>Сохранить изменения
+                    </button>
+                </form>
             </div>
-            
-            <form action="/profile" method="POST" enctype="multipart/form-data">
-                <div class="avatar-section fade-in-up">
-                    <img src="{$avatar}" alt="Аватар пользователя" class="avatar-preview" id="avatarPreview">
-                    <label class="avatar-upload-btn">
-                        <i class="fas fa-camera me-2"></i>Сменить аватар
-                        <input type="file" name="avatar" accept="image/*" id="avatarInput">
-                    </label>
-                </div>
-                
-                <div class="form-input-group fade-in-up">
-                    <div class="input-icon">
-                        <i class="fas fa-user-edit"></i>
-                    </div>
-                    <input type="text" name="username" class="form-control" value="{$username}" placeholder="Имя пользователя" required>
-                </div>
-                
-                <div class="form-input-group fade-in-up">
-                    <div class="input-icon">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <input type="email" name="email" class="form-control" value="{$email}" placeholder="Email" required>
-                </div>
-                
-                <div class="form-input-group fade-in-up">
-                    <div class="input-icon">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </div>
-                    <input type="text" name="address" class="form-control" value="{$address}" placeholder="Адрес доставки">
-                </div>
-                
-                <div class="form-input-group fade-in-up">
-                    <div class="input-icon">
-                        <i class="fas fa-phone"></i>
-                    </div>
-                    <input type="text" name="phone" class="form-control" value="{$phone}" placeholder="Номер телефона">
-                </div>
-                
-                <button type="submit" class="btn-save fade-in-up">
-                    <i class="fas fa-save me-2"></i>Сохранить изменения
-                </button>
-            </form>
         </div>
 
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             const avatarInput = document.getElementById('avatarInput');
             const avatarPreview = document.getElementById('avatarPreview');
+            const profileForm = document.getElementById('profileForm');
 
+            // Обработка предпросмотра аватарки
             if (avatarInput && avatarPreview) {
                 avatarInput.addEventListener('change', function(event) {
                     const file = event.target.files[0];
                     if (file) {
+                        // Проверяем размер файла (максимум 5MB)
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert('Файл слишком большой. Максимальный размер: 5MB');
+                            this.value = '';
+                            return;
+                        }
+
+                        // Проверяем тип файла
+                        if (!file.type.match('image.*')) {
+                            alert('Пожалуйста, выберите изображение');
+                            this.value = '';
+                            return;
+                        }
+
                         const reader = new FileReader();
                         reader.onload = function(e) {
                             avatarPreview.src = e.target.result;
                         };
                         reader.readAsDataURL(file);
                     }
+                });
+            }
+
+            // Обработка отправки формы
+            if (profileForm) {
+                profileForm.addEventListener('submit', function(e) {
+                    const avatarFile = avatarInput.files[0];
+                    if (avatarFile) {
+                        // Дополнительная проверка перед отправкой
+                        if (avatarFile.size > 5 * 1024 * 1024) {
+                            e.preventDefault();
+                            alert('Файл слишком большой. Максимальный размер: 5MB');
+                            return;
+                        }
+                        
+                        if (!avatarFile.type.match('image.*')) {
+                            e.preventDefault();
+                            alert('Пожалуйста, выберите изображение');
+                            return;
+                        }
+                    }
+                    
+                    // Показываем индикатор загрузки
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Сохранение...';
+                    submitBtn.disabled = true;
                 });
             }
         });
@@ -482,7 +536,7 @@ HTML;
         return $resultTemplate;
     }
 
-        public static function getHistoryTemplate(?array $data): string {
+    public static function getHistoryTemplate(?array $data): string {
         $template = parent::getTemplate();
         $title = 'История заказов - Bubble Pizza';
     
@@ -635,9 +689,14 @@ HTML;
                 transform: translateY(0);
             }
         }
+
+        /* Фикс для контейнера истории */
+        .history-wrapper {
+            padding: 1rem 0;
+        }
         </style>
 
-        <div class="container-fluid">
+        <div class="container history-wrapper">
             <div class="history-container fade-in-up">
                 <div class="history-header fade-in-up">
                     <h2><i class="fas fa-history me-3"></i>История заказов</h2>
