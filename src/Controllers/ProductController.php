@@ -9,7 +9,6 @@ use App\Services\DatabaseStorage;
 use App\Config\Config;
 use App\Services\ISaveStorage;
 
-
 class ProductController {
     public function get(?int $id): string {
 
@@ -41,6 +40,10 @@ class ProductController {
                 $basketCount += (int)($item['count_item'] ?? $item['quantity'] ?? 1);
             }
         }
+        
+        // ДЛЯ ОТЛАДКИ: выведем информацию о корзине
+        error_log("Basket count: " . $basketCount);
+        error_log("Basket session data: " . print_r($_SESSION['basket'] ?? 'empty', true));
         // ****************************************************
         
         // Если ID не указан, возвращаем все товары
@@ -57,4 +60,26 @@ class ProductController {
             return ProductTemplate::getCardTemplate(null);
         }
     }
+    // В BasketController
+public function addToBasket(): void {
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    if (!isset($_SESSION['basket'])) {
+        $_SESSION['basket'] = [];
+    }
+    
+    $productId = $_POST['id'] ?? null;
+    if ($productId) {
+        // Добавляем товар в корзину
+        $_SESSION['basket'][$productId] = [
+            'id' => $productId,
+            'quantity' => ($_SESSION['basket'][$productId]['quantity'] ?? 0) + 1
+        ];
+    }
+    
+    header('Location: /products');
+    exit;
+}
 }

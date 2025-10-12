@@ -20,9 +20,10 @@ class Config
         $dotenv = Dotenv::createImmutable($path);
         $dotenv->load();
         
-        // ОТЛАДКА: Проверяем загрузку VK переменных
+        // ОТЛАДКА: Проверяем загрузку переменных
         error_log("VK_CLIENT_ID loaded: " . (isset($_ENV['VK_CLIENT_ID']) ? $_ENV['VK_CLIENT_ID'] : 'NOT FOUND'));
         error_log("VK_CLIENT_SECRET loaded: " . (isset($_ENV['VK_CLIENT_SECRET']) ? substr($_ENV['VK_CLIENT_SECRET'], 0, 5) . '...' : 'NOT FOUND'));
+        error_log("STEAM_API_KEY loaded: " . (isset($_ENV['STEAM_API_KEY']) ? 'LOADED' : 'NOT FOUND'));
     }
 
     // Автоматическая инициализация при загрузке класса
@@ -89,11 +90,17 @@ class Config
         return $secret;
     }
 
+    // Steam OAuth настройки
+    public static function getSteamApiKey(): string {
+        $apiKey = $_ENV['STEAM_API_KEY'] ?? '';
+        error_log("Steam API Key from env: " . (!empty($apiKey) ? 'LOADED' : 'EMPTY'));
+        return $apiKey;
+    }
+
+    // Redirect URLs
     const GOOGLE_REDIRECT = self::SITE_URL . '/register/google';
     const VK_REDIRECT = self::SITE_URL . '/register/vk';
-
-    const STEAM_API_KEY = '';    
-    const STEAM_REDIRECT = self::SITE_URL . '/callback/steam';
+    const STEAM_REDIRECT = self::SITE_URL . '/register/steam';
 
     // --- Статусы заказов ---
     public const CODE_STATUS = [
@@ -131,6 +138,48 @@ class Config
                         'secret' => self::getGoogleClientSecret(),
                     ],
                     'scope' => 'email profile',
+                ],
+            ],
+        ];
+    }
+
+    // --- Конфигурация для Steam через Hybridauth ---
+    public static function getSteamConfig(): array {
+        self::loadEnv();
+
+        return [
+            'callback' => self::STEAM_REDIRECT,
+            'providers' => [
+                'Steam' => [
+                    'enabled' => true,
+                    'keys' => [
+                        'secret' => self::getSteamApiKey(),
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    // --- Общая конфигурация для всех провайдеров ---
+    public static function getAllOAuthConfig(): array {
+        self::loadEnv();
+
+        return [
+            'callback' => self::SITE_URL,
+            'providers' => [
+                'Google' => [
+                    'enabled' => true,
+                    'keys' => [
+                        'id' => self::getGoogleClientId(),
+                        'secret' => self::getGoogleClientSecret(),
+                    ],
+                    'scope' => 'email profile',
+                ],
+                'Steam' => [
+                    'enabled' => !empty(self::getSteamApiKey()),
+                    'keys' => [
+                        'secret' => self::getSteamApiKey(),
+                    ],
                 ],
             ],
         ];

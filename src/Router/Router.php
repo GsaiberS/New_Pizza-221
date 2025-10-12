@@ -19,11 +19,11 @@ class Router {
             $userData = $userStorage->getUserById((int)$_SESSION['user_id']);
             $user_id = $_SESSION['user_id'];
             $username = $userData['username'] ?? '';
-            $avatar = $userData['avatar'] ?? 'path/to/default/avatar.png';
+            $avatar = $userData['avatar'] ?? '/assets/image/default-avatar.png';
         } else {
             $user_id = 0;
             $username = '';
-            $avatar = 'path/to/default/avatar.png';
+            $avatar = '/assets/image/default-avatar.png';
         }
 
         $path = parse_url($url, PHP_URL_PATH);
@@ -32,6 +32,7 @@ class Router {
         
         $userController = new UserController();
         $basketController = new BasketController();
+        $orderController = new OrderController(); // Добавляем создание OrderController
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             switch ($resource) {
@@ -60,13 +61,15 @@ class Router {
                 case 'login':
                     $userController->login();
                     break;
+                case 'order': // ДОБАВЛЯЕМ ЭТОТ КЕЙС
+                    $orderController->create();
+                    break;
             }
             exit(); 
         }
 
         if ($resource === "order" && isset($pieces[2]) && is_numeric($pieces[2])) {
             $orderId = (int)$pieces[2];
-            $orderController = new OrderController();
             return $orderController->getDetails($orderId);
         }
 
@@ -81,7 +84,6 @@ class Router {
                 $about = new AboutController();
                 return $about->get();
             case "order":
-                $orderController = new OrderController();
                 return $orderController->get();
             case "register":
                 $registerController = new RegisterController();
@@ -95,6 +97,9 @@ class Router {
                             exit;
                         case "yandex":
                             $registerController->yandexAuth();
+                            exit;
+                        case "steam":
+                            $registerController->steamAuth();
                             exit;
                     }
                 }

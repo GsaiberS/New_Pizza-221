@@ -5,7 +5,6 @@ use App\Views\UserTemplate;
 use App\Config\Config;
 use App\Services\UserDBStorage;
 
-
 class UserController {
     private UserDBStorage $userStorage;
 
@@ -16,20 +15,19 @@ class UserController {
     }
 
     public function get(): string {
-        if ($_SERVER['REQUEST_METHOD'] === "POST") {
-            return $this->login();
-        }
-
         return UserTemplate::getUserTemplate();
     }
 
-    private function login(): string {
+    // ИЗМЕНЕНИЕ: делаем метод public вместо private
+    public function login(): void
+    {
         $username = strip_tags($_POST['username'] ?? '');
         $password = strip_tags($_POST['password'] ?? '');
 
         if (!$this->userStorage->loginUser($username, $password)) {
             $_SESSION['flash'] = "Ошибка ввода логина или пароля";
-            return UserTemplate::getUserTemplate();
+            header("Location: /login");
+            exit();
         }
 
         header("Location: /");
@@ -100,6 +98,7 @@ class UserController {
         header("Location: /profile");
         exit();
     }
+
     public function getOrdersHistory(): string {
         global $user_id;
 
@@ -114,7 +113,5 @@ class UserController {
         }
 
         return UserTemplate::getHistoryTemplate($data);
-        
     }
-
 }

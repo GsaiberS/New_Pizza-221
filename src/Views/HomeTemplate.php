@@ -10,239 +10,410 @@ class HomeTemplate extends BaseTemplate
     {
         $template = parent::getTemplate();
 
-        // Генерация HTML-кода для секции "Преимущества пиццерии"
-        $advantages = [
-            [
-                'icon' => 'fa-solid fa-pizza-slice',
-                'title' => 'Лучшие ингредиенты',
-                'description' => 'Мы используем только свежие и качественные продукты.'
-            ],
-            [
-                'icon' => 'fa-solid fa-truck-fast',
-                'title' => 'Быстрая доставка',
-                'description' => 'Доставляем горячую пиццу за 30 минут.'
-            ],
-            [
-                'icon' => 'fa-solid fa-hand-holding-heart',
-                'title' => 'Отличное обслуживание',
-                'description' => 'Наша команда всегда рада помочь вам.'
-            ],
-            [
-                'icon' => 'fa-solid fa-utensils',
-                'title' => 'Уникальные рецепты',
-                'description' => 'Попробуйте наши фирменные пиццы с секретными ингредиентами.'
-            ],
-            [
-                'icon' => 'fa-solid fa-gift',
-                'title' => 'Специальные предложения',
-                'description' => 'Регулярные акции и скидки для наших клиентов.'
-            ],
-            [
-                'icon' => 'fa-solid fa-leaf',
-                'title' => 'Экологичность',
-                'description' => 'Мы заботимся о природе и используем экологичную упаковку.'
-            ]
-        ];
+        $content = <<<HTML
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-        $advantageCards = '';
-        foreach ($advantages as $advantage) {
-            $advantageCards .= <<<HTML
-<div class="col-md-4 col-lg-2" data-aos="fade-up">
-    <div class="card advantage-card text-center h-100">
-        <div class="card-body d-flex flex-column justify-content-center align-items-center">
-            <i class="{$advantage['icon']} fa-2x mb-3" style="color: #d09db0;"></i>
-            <h6 class="card-title fw-bold">{$advantage['title']}</h6>
-            <p class="card-text text-muted small">{$advantage['description']}</p>
+body {
+    font-family: 'Poppins', sans-serif;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(208,157,176,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(102,126,234,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(118,75,162,0.1) 0%, transparent 50%),
+        linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f8f9fa 100%);
+    background-size: cover;
+    background-attachment: fixed;
+    color: #343a40;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== HERO ===== */
+.hero {
+    position: relative;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border-radius: 25px;
+    padding: 80px 20px;
+    margin: 40px auto;
+    width: 90%;
+    max-width: 1100px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(102,126,234,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(208,157,176,0.05) 0%, transparent 70%);
+    animation: float 15s ease-in-out infinite;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, rgb(208,157,176), #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    color: #444;
+    font-size: 1.3rem;
+    margin-bottom: 30px;
+}
+
+.hero .btn-main {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-weight: 600;
+    padding: 14px 35px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+.hero .btn-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+.hero .btn-main:hover::before {
+    left: 100%;
+}
+.hero .btn-main:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(102,126,234,0.5);
+}
+
+/* ===== SECTIONS ===== */
+.section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    margin: 40px auto;
+    padding: 60px 20px;
+    width: 90%;
+    max-width: 1100px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(102,126,234,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-align: center;
+}
+
+.section h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, rgb(208,157,176), #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===== ADVANTAGES ===== */
+.advantages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px 15px;
+    box-shadow: 0 6px 20px rgba(102,126,234,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 25px rgba(102,126,234,0.15);
+}
+.card i {
+    font-size: 2rem;
+    background: linear-gradient(135deg, rgb(208,157,176), #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 15px;
+}
+.card h3 {
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.card p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* ===== HITS ===== */
+.hits {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+}
+
+.hit {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    overflow: hidden;
+    width: 300px;
+    box-shadow: 0 8px 25px rgba(102,126,234,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+.hit:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px rgba(102,126,234,0.2);
+}
+.hit img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+.hit-info {
+    padding: 15px;
+}
+.hit-info h4 {
+    font-weight: 600;
+    background: linear-gradient(135deg, rgb(208,157,176), #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hit-info p {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+/* ===== REVIEWS ===== */
+.reviews {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+}
+.review {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 6px 15px rgba(102,126,234,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: left;
+    transition: all 0.3s ease;
+}
+.review:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px rgba(102,126,234,0.12);
+}
+.review .stars {
+    color: rgb(208,157,176);
+    margin-bottom: 10px;
+}
+.review p {
+    color: #555;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+.review .author {
+    font-weight: 600;
+    background: linear-gradient(135deg, rgb(208,157,176), #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===== АНИМАЦИЯ ===== */
+@keyframes fadeUp {
+    0% {opacity:0; transform: translateY(40px);}
+    100% {opacity:1; transform: translateY(0);}
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    25% { transform: translateY(-15px) translateX(8px) rotate(3deg); }
+    50% { transform: translateY(8px) translateX(-12px) rotate(-2deg); }
+    75% { transform: translateY(-10px) translateX(-8px) rotate(2deg); }
+}
+
+.hero, .section, .card, .hit, .review {
+    animation: fadeUp 0.8s ease both;
+}
+
+/* Floating pizza decorations */
+.floating-pizza {
+    position: absolute;
+    font-size: 2rem;
+    opacity: 0.1;
+    animation: float 6s ease-in-out infinite;
+}
+.pizza-1 { top: 10%; left: 5%; animation-delay: 0s; }
+.pizza-2 { top: 60%; right: 10%; animation-delay: 2s; }
+.pizza-3 { bottom: 20%; left: 15%; animation-delay: 4s; }
+
+/* Animation delays for cards */
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(5) { animation-delay: 0.5s; }
+.card:nth-child(6) { animation-delay: 0.6s; }
+
+.hit:nth-child(1) { animation-delay: 0.2s; }
+.hit:nth-child(2) { animation-delay: 0.4s; }
+.hit:nth-child(3) { animation-delay: 0.6s; }
+
+.review:nth-child(1) { animation-delay: 0.1s; }
+.review:nth-child(2) { animation-delay: 0.3s; }
+.review:nth-child(3) { animation-delay: 0.5s; }
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- HERO -->
+<section class="hero">
+    <div class="floating-pizza pizza-1">🍕</div>
+    <div class="floating-pizza pizza-2">🍕</div>
+    <div class="floating-pizza pizza-3">🍕</div>
+    
+    <h1>Добро пожаловать в Bubble Pizza 🍕</h1>
+    <p>Самые воздушные пиццы с невероятным вкусом!</p>
+    <a href="/products" class="btn-main">🍽 Посмотреть меню</a>
+</section>
+
+<!-- ADVANTAGES -->
+<section class="section">
+    <h2>Почему выбирают нас?</h2>
+    <div class="advantages">
+        <div class="card">
+            <i class="fa-solid fa-pizza-slice"></i>
+            <h3>Лучшие ингредиенты</h3>
+            <p>Только свежие, проверенные продукты от локальных поставщиков.</p>
+        </div>
+        <div class="card">
+            <i class="fa-solid fa-truck-fast"></i>
+            <h3>Быстрая доставка</h3>
+            <p>Доставим горячую пиццу за 30 минут!</p>
+        </div>
+        <div class="card">
+            <i class="fa-solid fa-star"></i>
+            <h3>Фирменный вкус</h3>
+            <p>Авторские рецепты и идеальные сочетания ингредиентов.</p>
+        </div>
+        <div class="card">
+            <i class="fa-solid fa-gift"></i>
+            <h3>Акции и бонусы</h3>
+            <p>Постоянные скидки и купоны для наших гостей.</p>
+        </div>
+        <div class="card">
+            <i class="fa-solid fa-hand-holding-heart"></i>
+            <h3>Любовь к клиентам</h3>
+            <p>Каждый заказ — с заботой, вниманием и улыбкой.</p>
+        </div>
+        <div class="card">
+            <i class="fa-solid fa-leaf"></i>
+            <h3>Экологичность</h3>
+            <p>Биоразлагаемая упаковка и забота о планете.</p>
         </div>
     </div>
-</div>
-HTML;
-        }
+</section>
 
-        // Отзывы
-        $reviews = [
-            [
-                'name' => 'Анна К.',
-                'text' => 'Отличная пицца! Всегда свежая и вкусная. Рекомендую!',
-                'rating' => 5
-            ],
-            [
-                'name' => 'Иван П.',
-                'text' => 'Быстрая доставка и приятные цены. Очень доволен!',
-                'rating' => 4
-            ],
-            [
-                'name' => 'Мария С.',
-                'text' => 'Заказываю уже не первый раз. Качество на высоте!',
-                'rating' => 5
-            ]
-        ];
-
-        $reviewCards = '';
-        foreach ($reviews as $review) {
-            $stars = '';
-            for ($i = 0; $i < $review['rating']; $i++) {
-                $stars .= '<i class="fa-solid fa-star" style="color: #ffcc00;"></i>';
-            }
-            for ($i = $review['rating']; $i < 5; $i++) {
-                $stars .= '<i class="fa-regular fa-star" style="color: #ffcc00;"></i>';
-            }
-
-            $reviewCards .= <<<HTML
-<div class="col-md-4" data-aos="fade-up">
-    <div class="card review-card h-100">
-        <div class="card-body">
-            <p class="card-text">{$review['text']}</p>
-            <div class="d-flex align-items-center mt-3">
-                <div class="me-2">{$stars}</div>
-                <div class="fw-bold">{$review['name']}</div>
+<!-- HITS -->
+<section class="section">
+    <h2>Попробуйте хиты недели 🔥</h2>
+    <div class="hits">
+        <div class="hit">
+            <img src="/assets/image/7.png" alt="Пицца Маргарита">
+            <div class="hit-info">
+                <h4>Пицца Ветчина с сыром</h4>
+                <p>Классика с томатным соусом, моцареллой и ветчиной.</p>
+            </div>
+        </div>
+        <div class="hit">
+            <img src="/assets/image/3.png" alt="Пицца Пепперони">
+            <div class="hit-info">
+                <h4>Пицца Кола-Барбекю</h4>
+                <p>Пикантная колбаса, сыр и идеальный томатный соус со вкусом колы.</p>
+            </div>
+        </div>
+        <div class="hit">
+            <img src="/assets/image/2.png" alt="Пицца BBQ">
+            <div class="hit-info">
+                <h4>Пицца Диабло</h4>
+                <p>Колбаски чоризо, говядина и острые халапеньо.</p>
             </div>
         </div>
     </div>
-</div>
-HTML;
-        }
+</section>
 
-        $content = <<<HTML
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-    
-    body {
-        font-family: 'Poppins', sans-serif;
-        background-color: #f9f9f9;
-        color: #333;
-        margin: 0;
-        padding: 0;
-    }
-
-    /* Hero Section */
-    .hero-section {
-        background: linear-gradient(135deg, rgb(208,157,176), rgb(230,180,195));
-        height: 400px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .hero-section h1 {
-        font-size: 48px;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
-
-    .hero-section p {
-        font-size: 18px;
-        margin-top: 10px;
-    }
-
-    .btn-custom {
-        background: white;
-        border: none;
-        color: rgb(208,157,176);
-        padding: 10px 20px;
-        border-radius: 25px;
-        font-weight: 600;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .btn-custom:hover {
-        transform: scale(1.05);
-        box-shadow: 0 8px 15px rgba(208,157,176, 0.3);
-    }
-
-    /* Advantages Section */
-    .advantage-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .advantage-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Reviews Section */
-    .review-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .review-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    footer {
-        background-color: #2c3e50;
-        color: white;
-        text-align: center;
-        padding: 1rem 0;
-        margin-top: 3rem;
-    }
-
-    /* Анимации */
-    [data-aos="fade-up"] {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-
-    [data-aos="fade-up"].aos-animate {
-        opacity: 1;
-        transform: translateY(0);
-    }
-</style>
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="icon" type="image/x-icon" href="/assets/image/ico.ico">
-<main class="container mt-5">
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="text-center">
-            <h1>Добро пожаловать в пиццерию!</h1>
-            <p class="lead">Лучшие ингредиенты, лучший вкус.</p>
-            <a href="#" class="btn btn-custom">Узнать больше</a>
+<!-- REVIEWS -->
+<section class="section">
+    <h2>Отзывы клиентов 💬</h2>
+    <div class="reviews">
+        <div class="review">
+            <div class="stars">★★★★★</div>
+            <p>"Отличная пицца! Всегда свежая и ароматная ❤️"</p>
+            <div class="author">— Анна К.</div>
         </div>
-    </section>
-
-    <!-- Advantages Section -->
-    <section class="my-5">
-        <h2 class="text-center mb-4">Почему выбирают нас?</h2>
-        <div class="row g-4">
-            {$advantageCards}
+        <div class="review">
+            <div class="stars">★★★★★</div>
+            <p>"Быстро, вкусно и недорого. Обожаю ваш сервис!"</p>
+            <div class="author">— Иван П.</div>
         </div>
-    </section>
-
-    <!-- Reviews Section -->
-    <section class="my-5">
-        <h2 class="text-center mb-4">Отзывы наших клиентов</h2>
-        <div class="row g-4">
-            {$reviewCards}
+        <div class="review">
+            <div class="stars">★★★★☆</div>
+            <p>"Доставка вовремя, пицца горячая. Советую всем друзьям!"</p>
+            <div class="author">— Мария С.</div>
         </div>
-    </section>
-</main>
+    </div>
+</section>
 
-
-
-<!-- AOS Animation Library -->
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 <script>
-    AOS.init({
-        duration: 800,
-        once: true
+document.addEventListener('DOMContentLoaded', function() {
+    // Анимация появления элементов при скролле
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animationPlayState = 'running';
+            }
+        });
+    }, observerOptions);
+    
+    // Наблюдаем за всеми анимированными элементами
+    document.querySelectorAll('.hero, .section, .card, .hit, .review').forEach(el => {
+        observer.observe(el);
     });
+});
 </script>
 HTML;
 
-        $resultTemplate = sprintf($template, 'Главная', $content);
-        return $resultTemplate;
+        return sprintf($template, 'Главная - Bubble Pizza', $content);
     }
 }

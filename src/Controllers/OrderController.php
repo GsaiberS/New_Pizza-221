@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controllers;
 use App\Services\OrderDBStorage;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -15,28 +14,21 @@ class OrderController
 {
     public function get(): string
     {
-    if (session_status() === PHP_SESSION_NONE) {
-    
+        // Получаем данные пользователя из сессии
+        $userData = [];
+        if (isset($_SESSION['user_id'])) {
+            $userStorage = new UserDBStorage();
+            $userData = $userStorage->getUserById((int)$_SESSION['user_id']);
+        }
+
+        $model = ProductFactory::createProduct();
+        $data = $model->getBasketData();
+
+        $orderTemplate = new OrderTemplate();
+        return $orderTemplate->getOrderTemplate($data, $userData);
     }
 
-    // Получаем данные пользователя из сессии
-    $userData = [];
-    if (isset($_SESSION['user_id'])) {
-        $userStorage = new UserDBStorage();
-        $userData = $userStorage->getUserById((int)$_SESSION['user_id']);
-    }
-
-    if ($_SERVER['REQUEST_METHOD'] == "POST") {
-        return $this->create();
-    }
-
-    $model = ProductFactory::createProduct();
-    $data = $model->getBasketData();
-
-    $orderTemplate = new OrderTemplate();
-    return $orderTemplate->getOrderTemplate($data, $userData);
-    }
-     public function getDetails(int $orderId): string
+    public function getDetails(int $orderId): string
     {
         $orderStorage = new OrderDBStorage();
         
@@ -55,27 +47,39 @@ class OrderController
         // Если все проверки пройдены, передаем данные заказа в шаблон для отображения
         return OrderTemplate::getOrderDetailsTemplate($orderData);
     }
-    public function create(): string
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-        
-        }
 
+    public function create(): void
+    {
         if (!ValidateOrderData::validate($_POST)) {
+            $_SESSION['flash'] = "Пожалуйста, заполните все обязательные поля";
             header("Location: /order");
-            return "";
+            exit();
         }
 
         $orderData = $this->prepareOrderData($_POST);
         $orderModel = OrderFactory::createOrder();
         $orderId = $orderModel->saveData($orderData);
 
-        $this->sendOrderConfirmation($orderData, $orderId);
-
-        $_SESSION['basket'] = [];
-        $_SESSION['flash'] = "Спасибо! Ваш заказ успешно создан и передан службе доставки.";
-        header("Location: /");
-        return "";
+        if ($orderId) {
+            $emailSent = $this->sendOrderConfirmation($orderData, $orderId);
+            
+            // Очищаем корзину
+            $_SESSION['basket'] = [];
+            
+            // Сообщение пользователю
+            if ($emailSent) {
+                $_SESSION['flash'] = "Спасибо! Ваш заказ №{$orderId} успешно создан. Подтверждение отправлено на email.";
+            } else {
+                $_SESSION['flash'] = "Спасибо! Ваш заказ №{$orderId} успешно создан, но не удалось отправить подтверждение на email.";
+            }
+            
+            header("Location: /history");
+            exit();
+        } else {
+            $_SESSION['flash'] = "Ошибка при создании заказа. Пожалуйста, попробуйте еще раз.";
+            header("Location: /order");
+            exit();
+        }
     }
 
     private function prepareOrderData(array $postData): array
@@ -88,11 +92,11 @@ class OrderController
         }, 0);
 
         return [
-            'fio' => htmlspecialchars(urldecode($postData['fio'])),
-            'address' => htmlspecialchars(urldecode($postData['address'])),
-            'phone' => htmlspecialchars($postData['phone']),
-            'email' => filter_var($postData['email'], FILTER_SANITIZE_EMAIL),
-            'payment_method' => htmlspecialchars($postData['payment_method']),
+            'fio' => htmlspecialchars(urldecode($postData['fio'] ?? '')),
+            'address' => htmlspecialchars(urldecode($postData['address'] ?? '')),
+            'phone' => htmlspecialchars($postData['phone'] ?? ''),
+            'email' => filter_var($postData['email'] ?? '', FILTER_SANITIZE_EMAIL),
+            'payment_method' => htmlspecialchars($postData['payment_method'] ?? 'Не указан'),
             'created_at' => date("d-m-Y H:i:s"),
             'products' => $products,
             'all_sum' => $totalSum
@@ -100,105 +104,428 @@ class OrderController
     }
 
     private function sendOrderConfirmation(array $orderData, $orderId): bool
-    {
-        if (empty($orderData['email'])) {
-            error_log("Email не указан");
-            return false;
-        }
-
-        $mail = new PHPMailer(true);
-
-        try {
-            // SMTP Configuration
-            $mail->isSMTP();
-            $mail->Host = 'smtp.mail.ru';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'v.milevskiy@coopteh.ru';
-            $mail->Password = 'qRbdMaYL6mfuiqcGX38z';
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = 587;
-            $mail->CharSet = 'UTF-8';
-
-            // Email content
-            $mail->setFrom('v.milevskiy@coopteh.ru', 'PIZZA-221');
-            $mail->addAddress($orderData['email']);
-            $mail->addReplyTo('no-reply@coopteh.ru', 'No Reply');
-            $mail->isHTML(true);
-            $mail->Subject = 'Ваш заказ #' . $orderId . ' в PIZZA-221';
-            $mail->Body = $this->buildEmailBody($orderData, $orderId);
-            $mail->AltBody = $this->buildTextEmailBody($orderData, $orderId);
-
-            return $mail->send();
-        } catch (Exception $e) {
-            error_log("Mailer Error: " . $e->getMessage());
-            return false;
-        }
+{
+    if (empty($orderData['email']) || !filter_var($orderData['email'], FILTER_VALIDATE_EMAIL)) {
+        error_log("Email не указан для заказа #{$orderId}");
+        return false;
     }
 
-    private function buildEmailBody(array $orderData, $orderId): string
-    {
-        $productsHtml = '';
-        foreach ($orderData['products'] as $product) {
-            $totalPrice = number_format($product['price'] * $product['quantity'], 2);
-            $productsHtml .= "<tr>
-                <td>{$product['name']}</td>
-                <td>{$product['quantity']}</td>
-                <td>{$product['price']} руб.</td>
-                <td>{$totalPrice} руб.</td>
-            </tr>";
-        }
+    // Проверяем валидность email
+    if (!filter_var($orderData['email'], FILTER_VALIDATE_EMAIL)) {
+        error_log("Невалидный email: {$orderData['email']} для заказа #{$orderId}");
+        return false;
+    }
 
-        return <<<HTML
+    $mail = new PHPMailer(true);
+
+    try {
+        // SMTP Configuration для Gmail
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com'; // Изменили на gmail
+        $mail->SMTPAuth = true;
+        $mail->Username = 'soborovets@gmail.com'; // Ваш Gmail
+        $mail->Password = 'djhc mmnm kfdr jrdd'; // Ваш пароль приложения
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Временно включаем дебаг для диагностики
+        $mail->SMTPDebug = 2;
+        $mail->Debugoutput = function($str, $level) {
+            error_log("PHPMailer [Level $level]: $str");
+        };
+
+        // Важно: для локальной разработки отключаем проверку SSL
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ];
+
+        // Email content - ИСПОЛЬЗУЕМ ВАШ Gmail В setFrom!
+        $mail->setFrom('soborovets@gmail.com', 'PIZZA-221'); // Тот же email что в Username
+        $mail->addAddress($orderData['email']);
+        $mail->addReplyTo('soborovets@gmail.com', 'PIZZA-221 Support');
+        $mail->isHTML(true);
+        $mail->Subject = 'Ваш заказ #' . $orderId . ' в PIZZA-221';
+        $mail->Body = $this->buildEmailBody($orderData, $orderId);
+        $mail->AltBody = $this->buildTextEmailBody($orderData, $orderId);
+
+        $result = $mail->send();
+        
+        if ($result) {
+            error_log("✅ Email успешно отправлен с Gmail для заказа #{$orderId} на адрес: {$orderData['email']}");
+        } else {
+            error_log("❌ Не удалось отправить email для заказа #{$orderId}");
+        }
+        
+        return $result;
+        
+    } catch (Exception $e) {
+        error_log("🚨 Mailer Error для заказа #{$orderId}: " . $e->getMessage());
+        error_log("Email: {$orderData['email']}");
+        return false;
+    }
+}
+
+    private function buildEmailBody(array $orderData, $orderId): string
+{
+    $productsHtml = '';
+    foreach ($orderData['products'] as $product) {
+        $totalPrice = number_format($product['price'] * $product['quantity'], 2);
+        $productsHtml .= <<<HTML
+        <tr style="border-bottom: 1px solid #e9ecef;">
+            <td style="padding: 12px 8px; text-align: left;">
+                <strong style="color: #343a40;">{$product['name']}</strong>
+            </td>
+            <td style="padding: 12px 8px; text-align: center; color: #6c757d;">
+                {$product['quantity']} шт.
+            </td>
+            <td style="padding: 12px 8px; text-align: right; color: #6c757d;">
+                {$product['price']} руб.
+            </td>
+            <td style="padding: 12px 8px; text-align: right; color: #667eea; font-weight: 600;">
+                {$totalPrice} руб.
+            </td>
+        </tr>
+        HTML;
+    }
+
+    return <<<HTML
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; }
-        .order-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .order-table th, .order-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        .order-table th { background-color: #f2f2f2; }
-        .total-row { font-weight: bold; }
-        .header { color: #d9534f; }
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f8f9fa 100%);
+            background-attachment: fixed;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .order-title {
+            font-size: 24px;
+            margin: 20px 0 10px;
+            font-weight: 600;
+        }
+        
+        .order-number {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .email-content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .order-table th {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 15px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #343a40;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .order-table tfoot tr {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .order-table tfoot td {
+            padding: 15px 8px;
+            text-align: right;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            background: rgba(248, 249, 250, 0.8);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            color: #343a40;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .email-footer {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .social-link {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .contact-info {
+            margin: 20px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite linear;
+        }
+        
+        .bubble-1 {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+        
+        .bubble-2 {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            left: 85%;
+            animation-delay: 5s;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-15px) translateX(8px) rotate(3deg);
+            }
+            50% {
+                transform: translateY(8px) translateX(-12px) rotate(-2deg);
+            }
+            75% {
+                transform: translateY(-10px) translateX(-8px) rotate(2deg);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .email-content {
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h2 class="header">Спасибо за ваш заказ в PIZZA-221!</h2>
-    <p><strong>Номер заказа:</strong> #{$orderId}</p>
-    <p><strong>Дата заказа:</strong> {$orderData['created_at']}</p>
+    <div class="bubble bubble-1"></div>
+    <div class="bubble bubble-2"></div>
     
-    <h3>Состав заказа:</h3>
-    <table class="order-table">
-        <thead>
-            <tr>
-                <th>Товар</th>
-                <th>Количество</th>
-                <th>Цена</th>
-                <th>Сумма</th>
-            </tr>
-        </thead>
-        <tbody>
-            {$productsHtml}
-        </tbody>
-        <tfoot>
-            <tr class="total-row">
-                <td colspan="3">Итого:</td>
-                <td>{$orderData['all_sum']} руб.</td>
-            </tr>
-        </tfoot>
-    </table>
-    
-    <h3>Информация о доставке:</h3>
-    <p><strong>ФИО:</strong> {$orderData['fio']}</p>
-    <p><strong>Адрес:</strong> {$orderData['address']}</p>
-    <p><strong>Телефон:</strong> {$orderData['phone']}</p>
-    <p><strong>Способ оплаты:</strong> {$orderData['payment_method']}</p>
-    
-    <p>Если у вас есть вопросы, свяжитесь с нами по телефону.</p>
-    <p>С уважением,<br>Команда PIZZA-221</p>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="logo">
+                <img src="/assets/image/BP.ico" alt="Bubble Pizza" class="logo-icon">
+                BUBBLE PIZZA
+            </div>
+            <h1 class="order-title">Спасибо за ваш заказ!</h1>
+            <p class="order-number">Номер заказа: <strong>#{$orderId}</strong></p>
+            <div style="margin-top: 15px;">
+                <span class="status-badge">✓ Принят в обработку</span>
+            </div>
+        </div>
+        
+        <div class="email-content">
+            <div class="section">
+                <h2 class="section-title">📋 Детали заказа</h2>
+                <p style="color: #6c757d; margin-bottom: 20px;">Дата заказа: {$orderData['created_at']}</p>
+                
+                <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Товар</th>
+                            <th style="text-align: center;">Кол-во</th>
+                            <th style="text-align: right;">Цена</th>
+                            <th style="text-align: right;">Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {$productsHtml}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: right; padding-right: 15px;">Итого:</td>
+                            <td style="text-align: right; padding-right: 15px;">
+                                <strong>{$orderData['all_sum']} руб.</strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">🚚 Информация о доставке</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">ФИО</div>
+                        <div class="info-value">{$orderData['fio']}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Телефон</div>
+                        <div class="info-value">{$orderData['phone']}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Адрес доставки</div>
+                        <div class="info-value">{$orderData['address']}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Способ оплаты</div>
+                        <div class="info-value">{$orderData['payment_method']}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #fff3cd, #ffeaa7); padding: 20px; border-radius: 12px; border-left: 4px solid #ffc107;">
+                <h3 style="color: #856404; margin: 0 0 10px; font-size: 16px;">💡 Важная информация</h3>
+                <p style="color: #856404; margin: 0; font-size: 14px;">
+                    Мы уже начали готовить ваш заказ! Ожидайте звонка от курьера для подтверждения времени доставки.
+                </p>
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <h3 style="margin: 0 0 20px;">BUBBLE PIZZA</h3>
+            
+            <div class="contact-info">
+                <div>📍 г. Кемерово, ул. Тухочевского, 32</div>
+                <div>📞 +7 (999) 777-99-71</div>
+                <div>✉️ info@bubblepizza.ru</div>
+            </div>
+            
+            <div class="social-links">
+                <a href="https://vk.com" class="social-link" target="_blank">
+                    <span style="font-size: 18px;">VK</span>
+                </a>
+                <a href="https://instagram.com" class="social-link" target="_blank">
+                    <span style="font-size: 18px;">Instagram</span>
+                </a>
+                <a href="https://telegram.org" class="social-link" target="_blank">
+                    <span style="font-size: 18px;">Telegram</span>
+                </a>
+            </div>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <p style="margin: 0; font-size: 12px; opacity: 0.8;">
+                    &copy; 2025 «Bubble Pizza» | Все права защищены<br>
+                    Разработано студентами группы ИС-221
+                </p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 HTML;
-    }
+}
 
     private function buildTextEmailBody(array $orderData, $orderId): string
     {

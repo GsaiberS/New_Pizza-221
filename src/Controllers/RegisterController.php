@@ -412,4 +412,64 @@ private function generateYandexUsername(string $name, string $userId): string
     }
     return $username;
 }
+public function steamAuth(): void
+{
+    try {
+        if (!class_exists('Hybridauth\Hybridauth')) {
+            throw new \Exception("Hybridauth library not found");
+        }
+
+        $config = Config::getSteamConfig();
+        $hybridauth = new Hybridauth($config);
+        
+        $adapter = $hybridauth->authenticate('Steam');
+        $userProfile = $adapter->getUserProfile();
+
+        if (!$userProfile) {
+            throw new \Exception("Failed to get user profile from Steam");
+        }
+
+        $email = "steam_{$userProfile->identifier}@steam.com";
+        $username = $userProfile->displayName ?? 'Steam_User';
+        $avatar = $userProfile->photoURL ?? '';
+
+        $userStorage = new UserDBStorage();
+        $user = $userStorage->findByEmail($email);
+
+        if (!$user) {
+            $success = $userStorage->create([
+                'username' => $username,
+                'email' => $email,
+                'avatar' => $avatar,
+                'password' => null,
+                'is_verified' => 1,
+                'oauth_provider' => 'steam',
+                'oauth_id' => $userProfile->identifier,
+            ]);
+
+            if (!$success) {
+                throw new \Exception("Failed to create user account");
+            }
+
+            $user = $userStorage->findByEmail($email);
+        }
+
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['avatar'] = $user['avatar'] ?? $avatar;
+        $_SESSION['oauth_provider'] = 'steam';
+
+        $_SESSION['flash'] = "Добро пожаловать, {$user['username']}!";
+        
+        $adapter->disconnect();
+        header("Location: /");
+        exit;
+
+    } catch (\Exception $e) {
+        error_log("Steam OAuth error: " . $e->getMessage());
+        $_SESSION['flash'] = "Ошибка входа через Steam: " . $e->getMessage();
+        header("Location: /login");
+        exit;
+    }
+}
 }
