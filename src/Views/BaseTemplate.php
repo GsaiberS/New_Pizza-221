@@ -634,6 +634,26 @@ if ($user_id > 0) {
                             </div>
                         </a>
                     </li>
+HTML;
+
+    // 🔥 Добавляем кнопку "Админ-панель" только для администратора
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+        $template .= <<<HTML
+                    <li>
+                        <a class="user-dropdown-item" href="http://localhost/admin">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="item-text">
+                                <span class="fw-semibold">Админ-панель</span>
+                                <small class="text-muted">Управление сайтом</small>
+                            </div>
+                        </a>
+                    </li>
+        HTML;
+    }
+
+    $template .= <<<HTML
                     <li><hr class="dropdown-divider my-2"></li>
                     <li>
                         <a class="user-dropdown-item logout-item" href="http://localhost/logout">
@@ -651,7 +671,8 @@ if ($user_id > 0) {
         </ul>
     </form>
 HTML;
-} else {
+}
+ else {
     $template .= <<<HTML
                             <ul class="navbar-nav ms-auto">
                                 <li class="nav-item dropdown">

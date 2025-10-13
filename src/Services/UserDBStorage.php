@@ -2,7 +2,6 @@
 namespace App\Services;
 
 use PDO;
-// Assuming DBStorage and ISaveStorage are defined elsewhere
 
 class UserDBStorage extends DBStorage implements ISaveStorage
 {
@@ -79,16 +78,15 @@ class UserDBStorage extends DBStorage implements ISaveStorage
     public function getUserById(int $userId): array
     {
         $stmt = $this->connection->prepare(
-            "SELECT id, username, email, address, phone, avatar FROM users WHERE id = ?"
+            "SELECT id, username, email, address, phone, avatar, role, is_verified FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Если пользователь не найден, возвращаем пустой массив
-        return $user ?: [];
+        return $user ? $user : array();
     }
 
-    // ⭐ НОВЫЙ/ИСПРАВЛЕННЫЙ МЕТОД: Обновление данных профиля
     /**
      * Обновление данных профиля пользователя, включая аватар
      */
@@ -96,8 +94,8 @@ class UserDBStorage extends DBStorage implements ISaveStorage
     {
         // Разрешенные для обновления поля. Включаем 'avatar'.
         $allowedFields = ['username', 'email', 'address', 'phone', 'avatar'];
-        $setClauses = [];
-        $executeData = ['id' => $userId];
+        $setClauses = array();
+        $executeData = array('id' => $userId);
 
         // Формируем динамический SET-блок для SQL
         foreach ($data as $key => $value) {
@@ -127,9 +125,9 @@ class UserDBStorage extends DBStorage implements ISaveStorage
             return false;
         }
     }
-    // ⭐ КОНЕЦ НОВОГО/ИСПРАВЛЕННОГО МЕТОДА
 
-    public function getDataHistory(int $userId): ?array {
+    public function getDataHistory(int $userId)
+    {
         try {
             $stmt = $this->connection->prepare(
                 "SELECT id, created, all_sum, status FROM orders WHERE user_id = ? ORDER BY created DESC"
@@ -143,7 +141,6 @@ class UserDBStorage extends DBStorage implements ISaveStorage
             error_log("Ошибка при получении истории заказов: " . $e->getMessage());
             return null;
         }
-    
     }
     
     /**
@@ -157,15 +154,23 @@ class UserDBStorage extends DBStorage implements ISaveStorage
 
         $sth = $this->connection->prepare($sql);
 
+        // Используем тернарные операторы вместо ??
+        $password = isset($data['password']) ? $data['password'] : null;
+        $token = isset($data['token']) ? $data['token'] : '';
+        $is_verified = isset($data['is_verified']) ? $data['is_verified'] : 0;
+        $oauth_provider = isset($data['oauth_provider']) ? $data['oauth_provider'] : null;
+        $oauth_id = isset($data['oauth_id']) ? $data['oauth_id'] : null;
+        $avatar = isset($data['avatar']) ? $data['avatar'] : null;
+
         $result = $sth->execute([
             'username' => $data['username'],
             'email' => $data['email'],
-            'password' => $data['password'] ?? null,
-            'token' => $data['token'] ?? '',
-            'is_verified' => $data['is_verified'] ?? 0,
-            'oauth_provider' => $data['oauth_provider'] ?? null,
-            'oauth_id' => $data['oauth_id'] ?? null,
-            'avatar' => $data['avatar'] ?? null
+            'password' => $password,
+            'token' => $token,
+            'is_verified' => $is_verified,
+            'oauth_provider' => $oauth_provider,
+            'oauth_id' => $oauth_id,
+            'avatar' => $avatar
         ]);
 
         return $result;
@@ -174,7 +179,7 @@ class UserDBStorage extends DBStorage implements ISaveStorage
     /**
     * Поиск пользователя по email
     */
-    public function findByEmail(string $email): ?array
+    public function findByEmail(string $email)
     {
         $stmt = $this->connection->prepare(
             "SELECT * FROM users WHERE email = ?"
@@ -182,6 +187,44 @@ class UserDBStorage extends DBStorage implements ISaveStorage
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        return $user ?: null;
+        return $user ? $user : null;
+    }
+
+    public function findByUsername(string $username)
+    {
+        $stmt = $this->connection->prepare(
+            "SELECT * FROM users WHERE username = ?"
+        );
+        $stmt->execute([$username]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $user ? $user : null;
+    }
+
+    public function getAllUsers(): array
+    {
+        try {
+            $stmt = $this->connection->prepare(
+                "SELECT * FROM users ORDER BY id ASC"
+            );
+            $stmt->execute();
+            
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // ДОБАВИМ ДЕТАЛЬНУЮ ОТЛАДКУ
+            error_log("=== DEBUG getAllUsers() ===");
+            error_log("SQL: SELECT * FROM users ORDER BY id ASC");
+            error_log("Found users: " . count($users));
+            
+            foreach ($users as $user) {
+                $role = isset($user['role']) ? $user['role'] : 'NOT SET';
+                error_log("User ID: {$user['id']}, Username: {$user['username']}, Role: {$role}, Email: {$user['email']}");
+            }
+            
+            return $users ? $users : array();
+        } catch (\Exception $e) {
+            error_log("Ошибка при получении списка пользователей: " . $e->getMessage());
+            return array();
+        }
     }
 }

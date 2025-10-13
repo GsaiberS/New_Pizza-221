@@ -375,8 +375,8 @@ HTML;
             /* --- СТИЛИ КНОПКИ КОРЗИНЫ --- */
             .floating-basket-btn {
                 position: fixed;
-                right: 30px; 
-                bottom: 30px; 
+                right: 55px;
+                bottom: 80px;
                 width: 70px;  
                 height: 70px; 
                 background: linear-gradient(135deg, #667eea, #764ba2);
@@ -385,13 +385,26 @@ HTML;
                 font-size: 24px; 
                 box-shadow: 0 8px 25px rgba(102,126,234, 0.4);
                 z-index: 99999;
-                transition: all 0.3s ease;
+                transition: all 0.15s ease; /* Очень быстрая анимация */
                 text-decoration: none;
-                display: $basketDisplayStyle; 
+                display: flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
                 border: 3px solid white;
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* Классы для анимации скролла */
+            .floating-basket-btn.scroll-hide {
+                transform: translateY(15px); /* Маленькое смещение */
+                opacity: 0.8; /* Легкая прозрачность */
+            }
+
+            .floating-basket-btn.scroll-show {
+                transform: translateY(0);
+                opacity: 1;
             }
 
             .floating-basket-btn:hover {
@@ -475,6 +488,11 @@ HTML;
                     font-size: 20px;
                 }
                 
+                .floating-basket-btn.scroll-hide {
+                    transform: translateY(10px);
+                    opacity: 0.8;
+                }
+                
                 .category-navbar .nav {
                     flex-wrap: wrap;
                 }
@@ -486,18 +504,57 @@ HTML;
             }
         </style>
 
-        <!-- Плавающая кнопка корзины -->
-        <a href="/order" class="floating-basket-btn" id="floatingBasketButton">
-            <i class="fas fa-shopping-basket"></i>
-            <span class="basket-count" id="basketItemCount">$basketCount</span>
-        </a>
-
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const forms = document.querySelectorAll('.add-to-basket-form');
                 const floatingButton = document.getElementById('floatingBasketButton');
                 const basketCountSpan = document.getElementById('basketItemCount');
                 const categoryLinks = document.querySelectorAll('.category-nav-link');
+                
+                // Переменные для управления скроллом
+                let lastScrollTop = 0;
+                let scrollTimeout = null;
+                
+                // Функция для обработки скролла
+                function handleScroll() {
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const scrollDirection = scrollTop > lastScrollTop ? 'down' : 'up';
+                    
+                    // Мгновенная реакция на скролл
+                    if (scrollDirection === 'down' && scrollTop > 50) {
+                        // Скролл вниз - слегка смещаем кнопку
+                        floatingButton.classList.remove('scroll-show');
+                        floatingButton.classList.add('scroll-hide');
+                    } else {
+                        // Скролл вверх или вверху страницы - сразу показываем
+                        floatingButton.classList.remove('scroll-hide');
+                        floatingButton.classList.add('scroll-show');
+                    }
+                    
+                    lastScrollTop = scrollTop;
+                    
+                    // Очищаем предыдущий таймаут
+                    if (scrollTimeout) {
+                        clearTimeout(scrollTimeout);
+                    }
+                    
+                    // Автоматически показываем кнопку через 0.5 секунды после остановки скролла
+                    scrollTimeout = setTimeout(() => {
+                        floatingButton.classList.remove('scroll-hide');
+                        floatingButton.classList.add('scroll-show');
+                    }, 500); // Очень быстро - 0.5 секунды
+                }
+                
+                // Обработчик скролла с троттлингом
+                let scrollThrottle = null;
+                window.addEventListener('scroll', function() {
+                    if (!scrollThrottle) {
+                        scrollThrottle = setTimeout(() => {
+                            handleScroll();
+                            scrollThrottle = null;
+                        }, 25); // Минимальная задержка
+                    }
+                });
                 
                 // Плавный скролл к категориям с отступом
                 categoryLinks.forEach(link => {
@@ -515,6 +572,12 @@ HTML;
                             // Подсветка активной категории
                             categoryLinks.forEach(l => l.classList.remove('active'));
                             this.classList.add('active');
+                            
+                            // Показываем кнопку после скролла
+                            setTimeout(() => {
+                                floatingButton.classList.remove('scroll-hide');
+                                floatingButton.classList.add('scroll-show');
+                            }, 300);
                         }
                     });
                 });
@@ -555,12 +618,17 @@ HTML;
                             if (newCount !== undefined) {
                                 basketCountSpan.textContent = newCount;
                                 floatingButton.style.display = 'flex';
+                                // Показываем кнопку при добавлении товара
+                                floatingButton.classList.remove('scroll-hide');
+                                floatingButton.classList.add('scroll-show');
                             } else {
                                 // Если сервер не вернул количество, увеличиваем на 1
                                 let currentCount = parseInt(basketCountSpan.textContent) || 0;
                                 currentCount += 1;
                                 basketCountSpan.textContent = currentCount;
                                 floatingButton.style.display = 'flex';
+                                floatingButton.classList.remove('scroll-hide');
+                                floatingButton.classList.add('scroll-show');
                             }
                         })
                         .catch(error => {
@@ -570,6 +638,8 @@ HTML;
                             currentCount += 1;
                             basketCountSpan.textContent = currentCount;
                             floatingButton.style.display = 'flex';
+                            floatingButton.classList.remove('scroll-hide');
+                            floatingButton.classList.add('scroll-show');
                         });
                     });
                 });
@@ -597,11 +667,26 @@ HTML;
                         toast.classList.remove('show');
                     }, 1500);
                 }
+                
+                // Инициализация - показываем кнопку при загрузке
+                setTimeout(() => {
+                    floatingButton.classList.add('scroll-show');
+                }, 300);
             });
         </script>
 HTML;
 
         $resultTemplate = sprintf($template, $title, $content);
+        
+        // Добавляем кнопку корзины ПОСЛЕ всего контента
+        $resultTemplate .= <<<HTML
+        <!-- Плавающая кнопка корзины -->
+        <a href="/order" class="floating-basket-btn" id="floatingBasketButton" style="display: $basketDisplayStyle">
+            <i class="fas fa-shopping-basket"></i>
+            <span class="basket-count" id="basketItemCount">$basketCount</span>
+        </a>
+HTML;
+
         return $resultTemplate;
     }
 

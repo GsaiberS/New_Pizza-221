@@ -21,22 +21,35 @@ class UserController {
     }
 
     public function login(): void
-    {
-        error_log("=== UserController::login() called ===");
-        error_log("POST data: " . print_r($_POST, true));
-        
-        $username = strip_tags($_POST['username'] ?? '');
-        $password = strip_tags($_POST['password'] ?? '');
+{
+    error_log("=== UserController::login() called ===");
+    error_log("POST data: " . print_r($_POST, true));
+    
+    $username = strip_tags($_POST['username'] ?? '');
+    $password = strip_tags($_POST['password'] ?? '');
 
-        if (!$this->userStorage->loginUser($username, $password)) {
-            $_SESSION['flash'] = "Ошибка ввода логина или пароля";
-            header("Location: /login");
-            exit();
-        }
-
-        header("Location: /");
+    // Проверяем логин
+    $loginSuccess = $this->userStorage->loginUser($username, $password);
+    if (!$loginSuccess) {
+        $_SESSION['flash'] = "Ошибка ввода логина или пароля";
+        header("Location: /login");
         exit();
     }
+
+    // 🔥 После успешного логина — получаем пользователя из базы
+    $user = $this->userStorage->findByUsername($username);
+    if ($user) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['avatar'] = $user['avatar'] ?? '/assets/image/default-avatar.png';
+        $_SESSION['role'] = $user['role'] ?? 'user'; // ✅ добавлено
+    }
+
+    $_SESSION['flash'] = "Добро пожаловать, {$user['username']}!";
+    header("Location: /");
+    exit();
+}
+
 
     public function profile(): string {
         error_log("=== UserController::profile() called - showing profile form ===");
